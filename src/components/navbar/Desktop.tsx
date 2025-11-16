@@ -1,4 +1,3 @@
-import { UserGroupIcon } from '@heroicons/react/24/solid';
 import { Link, NavLink } from 'react-router';
 
 interface DesktopNavbarProps {
@@ -10,20 +9,23 @@ export const DesktopNavbar = ({ links }: DesktopNavbarProps) => {
     <header className="flex items-center justify-between p-10">
       <section>
         <Link to="/" className="flex cursor-pointer items-center">
-          <UserGroupIcon className="mr-4 size-10 xl:size-12" />
-          <h1 className="text-lg font-bold xl:text-xl">
-            Powered by Dahnoun Holdings
+          <h1 className="bg-gradient-to-r from-fuchsia-400 to-purple-400 bg-clip-text text-5xl font-bold text-transparent xl:text-3xl">
+            QuantEdge
           </h1>
         </Link>
       </section>
       <nav>
-        <ul className="flex space-x-10 text-xl xl:text-2xl">
+        <ul className="flex space-x-5 text-xl xl:text-2xl">
           {links.map((link) => (
-            <li key={link.to}>
+            <li key={link.to} className="text-xl text-white">
               <NavLink
                 to={link.to}
                 className={({ isActive }) =>
-                  `cursor-pointer hover:font-bold ${isActive ? 'font-bold' : ''}`
+                  `cursor-pointer rounded-full px-4 py-2 transition-colors ${
+                    isActive
+                      ? 'bg-[rgba(229,231,235,0.2)]'
+                      : 'hover:bg-[rgba(229,231,235,0.2)]'
+                  }`
                 }
               >
                 {link.label}

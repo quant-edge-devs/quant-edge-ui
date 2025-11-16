@@ -3,7 +3,7 @@ import { Navbar } from '../components/navbar';
 
 export const MainLayout = () => {
   return (
-    <div className="min-h-screen bg-[var(--color-mint-gray)]">
+    <div className="font-inter min-h-screen bg-[#1a0820]">
       <Navbar />
       <main>
         <Outlet />

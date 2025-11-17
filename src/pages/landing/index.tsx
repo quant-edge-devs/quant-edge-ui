@@ -20,7 +20,7 @@ export const Landing = () => {
         Raw Data. Real Stories. Stunning Visuals.
       </p>
       <Button
-        className="rounded-lg bg-gradient-to-r from-fuchsia-500 to-purple-500 px-10 py-4 text-xl font-semibold text-white transition hover:from-fuchsia-600 hover:to-purple-600"
+        className="cursor-pointer rounded-lg bg-gradient-to-r from-fuchsia-500 to-purple-500 px-10 py-4 text-xl font-semibold text-white transition hover:from-fuchsia-600 hover:to-purple-600"
         onClick={() => navigate('/start-analyzing')}
       >
         Start Analyzing

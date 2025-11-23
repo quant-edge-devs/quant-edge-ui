@@ -4,6 +4,9 @@ import {
   sendPasswordResetEmail,
   signInWithEmailAndPassword,
   signOut,
+  signInWithPopup,
+  GoogleAuthProvider,
+  onAuthStateChanged,
 } from 'firebase/auth';
 import type { User, UserCredential } from 'firebase/auth';
 import { auth } from '../firebase';
@@ -14,6 +17,7 @@ type AuthContextType = {
   login: (email: string, password: string) => Promise<UserCredential>;
   logout: () => Promise<void>;
   resetPassword: (email: string) => Promise<void>;
+  loginWithGoogle: () => Promise<UserCredential>;
 };
 const initialState: AuthContextType = {
   currentUser: null,
@@ -27,15 +31,16 @@ const initialState: AuthContextType = {
     throw new Error('logout function not initialized');
   },
   resetPassword: async () => {
-    throw new Error('logout function not initialized');
+    throw new Error('resetPassword function not initialized');
+  },
+  loginWithGoogle: async () => {
+    throw new Error('loginWithGoogle function not initialized');
   },
 };
 
 const AuthContext = createContext(initialState);
 
-export const useAuth = () => {
-  return useContext(AuthContext);
-};
+export const useAuth = () => useContext(AuthContext);
 
 type AuthProviderProps = {
   children: React.ReactNode;
@@ -55,12 +60,16 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
   const resetPassword = (email: string) => sendPasswordResetEmail(auth, email);
 
+  const loginWithGoogle = () => {
+    const provider = new GoogleAuthProvider();
+    return signInWithPopup(auth, provider);
+  };
+
   useEffect(() => {
-    const unsubscribe = auth.onAuthStateChanged((user) => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
       setLoading(false);
       setCurrentUser(user);
     });
-
     return unsubscribe;
   }, []);
 
@@ -70,6 +79,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     login,
     logout,
     resetPassword,
+    loginWithGoogle,
   };
 
   return (

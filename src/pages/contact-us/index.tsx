@@ -61,7 +61,7 @@ export const ContactUs = () => {
                   resetForm();
                   setSubmitting(false);
                 },
-                (err) => {
+                () => {
                   setError('Failed to send message. Please try again.');
                   setSubmitting(false);
                 }

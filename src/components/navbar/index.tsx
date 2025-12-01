@@ -7,6 +7,7 @@ const links = [
   { to: '/tutorial', label: 'Tutorial' },
   { to: '/pricing', label: 'Pricing' },
   { to: '/auth/log-in', label: 'Log in' },
+  { to: '/charting', label: 'Charting' },
 ];
 
 export const Navbar = () => {

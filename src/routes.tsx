@@ -10,6 +10,7 @@ import { Pricing } from './pages/pricing';
 import { Tutorial } from './pages/tutorial';
 import { StartAnalyzing } from './pages/start-analyzing';
 import { Auth } from './pages/auth';
+import { Charting } from './pages/charting';
 
 export const routes: RouteObject[] = [
   {
@@ -19,6 +20,7 @@ export const routes: RouteObject[] = [
       { path: 'about', element: <About /> },
       { path: 'contact-us', element: <ContactUs /> },
       { path: 'pricing', element: <Pricing /> },
+      { path: 'charting', element: <Charting /> },
 
       {
         path: 'auth',

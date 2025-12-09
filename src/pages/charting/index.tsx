@@ -1,32 +1,31 @@
-import { useState, useEffect } from 'react';
-import { FaShareAlt, FaDownload, FaTrash, FaRegEdit } from 'react-icons/fa';
+import { useState, useEffect, useRef } from 'react';
+import { FaTrash, FaRegEdit } from 'react-icons/fa';
+import Chart from './RenderChart';
 
 type ChartData = {
   title: string;
   chartType: string;
   selectedStocks: string[];
+  startDate: string;
+  endDate: string;
   primaryMetric: string;
   secondaryMetric: string;
 };
 
 const PRIMARY_METRICS = [
-  'Revenue ($M)',
-  'Net Income ($M)',
-  'Gross Margin (%)',
-  'Operating Margin (%)',
-  'Growth Rate (%)',
-  'EPS ($)',
+  'Price To Sales Ratio',
+  'Price To Earnings Ratio',
   'Market Cap ($B)',
+  'Dividend Yield (%)',
+  'Earnings Per Share',
 ];
 const SECONDARY_METRICS = [
   'None',
-  'Revenue ($M)',
-  'Net Income ($M)',
-  'Gross Margin (%)',
-  'Operating Margin (%)',
-  'Growth Rate (%)',
-  'EPS ($)',
+  'Price To Sales Ratio',
+  'Price To Earnings Ratio',
   'Market Cap ($B)',
+  'Dividend Yield (%)',
+  'Earnings Per Share',
 ];
 const CHART_TYPE = [
   'Bar Chart',
@@ -51,6 +50,8 @@ function AddChartModal({
   const [selectedStocks, setSelectedStocks] = useState<string[]>([]);
   const [primaryMetric, setPrimaryMetric] = useState(PRIMARY_METRICS[0]);
   const [secondaryMetric, setSecondaryMetric] = useState(SECONDARY_METRICS[0]);
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
 
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<{ ticker: string; name: string }[]>(
@@ -98,17 +99,7 @@ function AddChartModal({
     setSelectedStocks(selectedStocks.filter((t) => t !== ticker));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    onAdd({
-      title,
-      chartType,
-      selectedStocks,
-      primaryMetric,
-      secondaryMetric,
-    });
-    onClose();
-    // Reset form
+  const resetForm = () => {
     setTitle('');
     setChartType(CHART_TYPE[0]);
     setSelectedStocks([]);
@@ -119,6 +110,21 @@ function AddChartModal({
     setIsDropdownOpen(false);
   };
 
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    onAdd({
+      title,
+      chartType,
+      selectedStocks,
+      startDate,
+      endDate,
+      primaryMetric,
+      secondaryMetric,
+    });
+    onClose();
+    resetForm();
+  };
+
   if (!open) return null;
 
   return (
@@ -126,7 +132,10 @@ function AddChartModal({
       <div className="relative w-full max-w-lg rounded-2xl border border-fuchsia-700/40 bg-[#181425] p-8 shadow-2xl">
         <button
           className="absolute top-4 right-4 cursor-pointer text-xl text-purple-200 hover:text-fuchsia-400"
-          onClick={onClose}
+          onClick={() => {
+            resetForm();
+            onClose();
+          }}
         >
           ×
         </button>
@@ -242,11 +251,38 @@ function AddChartModal({
               ))}
             </select>
           </div>
+          <div>
+            <label className="mb-1 block text-xs text-purple-200">
+              Start Date
+            </label>
+            <input
+              className="w-full rounded-md border border-fuchsia-700/40 bg-[#231133] p-3 text-white placeholder-purple-400 focus:ring-2 focus:ring-fuchsia-400 focus:outline-none"
+              type="date"
+              value={startDate}
+              onChange={(e) => setStartDate(e.target.value)}
+              required
+            />
+          </div>
+          <div>
+            <label className="mb-1 block text-xs text-purple-200">
+              End Date
+            </label>
+            <input
+              className="w-full rounded-md border border-fuchsia-700/40 bg-[#231133] p-3 text-white placeholder-purple-400 focus:ring-2 focus:ring-fuchsia-400 focus:outline-none"
+              type="date"
+              value={endDate}
+              onChange={(e) => setEndDate(e.target.value)}
+              required
+            />
+          </div>
           <div className="mt-2 flex justify-end gap-2">
             <button
               type="button"
               className="cursor-pointer rounded-lg bg-[#231133] px-6 py-2 font-semibold text-white transition hover:bg-[#2d1840]"
-              onClick={onClose}
+              onClick={() => {
+                resetForm();
+                onClose();
+              }}
             >
               Cancel
             </button>
@@ -297,7 +333,7 @@ export const Charting = () => {
   };
 
   return (
-    <div className="font-inter min-h-screen bg-[#16131f] text-white">
+    <div className="font-inter bg-fuchisa min-h-screen text-white">
       {/* ...header and other content... */}
       <AddChartModal
         open={modalOpen}
@@ -335,7 +371,14 @@ export const Charting = () => {
                   </div>
                   {/* Chart placeholder */}
                   <div className="mb-2 flex h-48 items-center justify-center rounded-lg bg-[#16131f]">
-                    <span className="text-purple-400">[Chart Here]</span>
+                    <span className="text-purple-400">
+                      <Chart
+                        tickers={chart.selectedStocks}
+                        metric={chart.primaryMetric}
+                        startDate={chart.startDate}
+                        endDate={chart.endDate}
+                      />
+                    </span>
                   </div>
                 </div>
               ) : (

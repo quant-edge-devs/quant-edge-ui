@@ -2,19 +2,17 @@ import BarChart from './chart-types/BarChart';
 import LineChart from './chart-types/LineChart';
 // ...import other chart types...
 
-const Chart = ({ chartType, ...props }) => {
+type ChartProps = {
+  tickers: string[];
+  metric: string;
+  startDate: string;
+  endDate: string;
+  chartType: string;
+};
+const Chart = ({ chartType, ...props }: ChartProps) => {
   switch (chartType) {
     case 'Bar Chart':
-      return (
-        <BarChart
-          tickers={[]}
-          metric={''}
-          startDate={''}
-          endDate={''}
-          chartType={''}
-          {...props}
-        />
-      );
+      return <BarChart {...props} />;
     case 'Line Chart':
       return <LineChart {...props} />;
     // Add more cases for other chart types

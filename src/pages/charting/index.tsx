@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { FaTrash, FaRegEdit } from 'react-icons/fa';
 import Chart from './RenderChart';
 
@@ -15,7 +15,7 @@ type ChartData = {
 const PRIMARY_METRICS = [
   'Price To Sales Ratio',
   'Price To Earnings Ratio',
-  'Market Cap ($B)',
+  'Market Cap',
   'Dividend Yield (%)',
   'Earnings Per Share',
 ];
@@ -23,18 +23,11 @@ const SECONDARY_METRICS = [
   'None',
   'Price To Sales Ratio',
   'Price To Earnings Ratio',
-  'Market Cap ($B)',
+  'Market Cap',
   'Dividend Yield (%)',
   'Earnings Per Share',
 ];
-const CHART_TYPE = [
-  'Bar Chart',
-  'Line Chart',
-  'Area Chart',
-  'Scatter Plot',
-  'Bubble Chart',
-  'Pie Chart',
-];
+const CHART_TYPE = ['Bar Chart', 'Line Chart'];
 
 function AddChartModal({
   open,
@@ -272,7 +265,6 @@ function AddChartModal({
               type="date"
               value={endDate}
               onChange={(e) => setEndDate(e.target.value)}
-              required
             />
           </div>
           <div className="mt-2 flex justify-end gap-2">
@@ -377,6 +369,7 @@ export const Charting = () => {
                         metric={chart.primaryMetric}
                         startDate={chart.startDate}
                         endDate={chart.endDate}
+                        chartType={chart.chartType}
                       />
                     </span>
                   </div>

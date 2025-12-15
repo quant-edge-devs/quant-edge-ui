@@ -45,15 +45,15 @@ export const ContactUs = () => {
             console.log(values.email);
             emailjs
               .send(
-                import.meta.env.VITE_EMAILJS_SERVICE_ID, // Replace with your EmailJS service ID
-                import.meta.env.VITE_EMAILJS_TEMPLATE_ID, // Replace with your EmailJS template ID
+                import.meta.env.VITE_EMAILJS_SERVICE_ID,
+                import.meta.env.VITE_EMAILJS_TEMPLATE_ID,
                 {
                   from_name: values.name,
                   from_email: values.email,
                   to_email: values.email,
                   message: values.message,
                 },
-                import.meta.env.VITE_EMAILJS_USER_ID // Replace with your EmailJS user ID (public key)
+                import.meta.env.VITE_EMAILJS_USER_ID
               )
               .then(
                 () => {

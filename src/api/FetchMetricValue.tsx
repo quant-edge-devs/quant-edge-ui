@@ -10,16 +10,16 @@ export async function fetchMetricValue(
       url = `http://localhost:8080/api/stocks/pe/${ticker}/${startDate}/${endDate}`;
       break;
     case 'Price To Sales Ratio':
-      url = `http://localhost:8080/api/stocks/ps/${ticker}/${startDate}`;
+      url = `http://localhost:8080/api/stocks/ps/${ticker}/${startDate}/${endDate}`;
       break;
     case 'Market Cap':
-      url = `http://localhost:8080/api/stocks/marketCapHistory/${ticker}/${startDate}`;
+      url = `http://localhost:8080/api/stocks/marketCapHistory/${ticker}/${startDate}/${endDate}`;
       break;
     case 'Dividend Yield (%)':
-      url = `http://localhost:8080/api/stocks/dividendInfo/${ticker}/${startDate}`;
+      url = `http://localhost:8080/api/stocks/dividendInfo/${ticker}/${startDate}/${endDate}`;
       break;
     case 'Earnings Per Share':
-      url = `http://localhost:8080/api/stocks/eps/${ticker}/${startDate}`;
+      url = `http://localhost:8080/api/stocks/eps/${ticker}/${startDate}/${endDate}`;
       break;
     default:
       throw new Error('Unknown metric: ' + metric);

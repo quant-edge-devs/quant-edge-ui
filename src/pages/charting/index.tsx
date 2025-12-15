@@ -362,7 +362,7 @@ export const Charting = () => {
                     </div>
                   </div>
                   {/* Chart placeholder */}
-                  <div className="mb-2 flex h-48 items-center justify-center rounded-lg bg-[#16131f]">
+                  <div className="mb-2 flex h-200 items-center justify-center rounded-lg bg-[#16131f]">
                     <span className="text-purple-400">
                       <Chart
                         tickers={chart.selectedStocks}

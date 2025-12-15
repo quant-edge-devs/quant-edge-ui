@@ -15,7 +15,6 @@ const BarChart = ({ tickers, metric, startDate, endDate }: BarChartProps) => {
   useEffect(() => {
     if (!tickers.length || !metric) return;
 
-    // Fetch metric data for each ticker
     const fetchData = async () => {
       const promises = tickers.map((ticker) =>
         fetchMetricValue(metric, ticker, startDate, endDate)

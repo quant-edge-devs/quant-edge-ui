@@ -1,6 +1,9 @@
 import { useState, useEffect } from 'react';
 import { FaTrash, FaRegEdit } from 'react-icons/fa';
 import Chart from './RenderChart';
+import VerticalNavbar from '../../components/navbar/VerticalNavbar';
+import WelcomeDashboard from './welcome-modal/WelcomeDashboard';
+import SelectDashboardType from './welcome-modal/SelectDashboardType';
 
 type ChartData = {
   title: string;
@@ -52,7 +55,6 @@ function AddChartModal({
   );
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
-  // Fetch tickers as user types
   useEffect(() => {
     const fetchTickers = async () => {
       if (query.trim().length === 0) {
@@ -121,8 +123,11 @@ function AddChartModal({
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
-      <div className="relative w-full max-w-lg rounded-2xl border border-fuchsia-700/40 bg-[#181425] p-8 shadow-2xl">
+    // this is the div for the entire page when the add chart modal is open
+    <div className="fixed inset-0 z-50 flex items-center justify-center border border-white bg-black/60">
+      {/* this is the actual modal box */}
+      <div className="relative w-full max-w-lg rounded-2xl border border-white bg-[#181425] p-8 shadow-2xl">
+        {/* this is the close button */}
         <button
           className="absolute top-4 right-4 cursor-pointer text-xl text-purple-200 hover:text-fuchsia-400"
           onClick={() => {
@@ -137,6 +142,7 @@ function AddChartModal({
           Configure your financial chart by selecting stocks and metrics
         </div>
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+          {/* Chart Title Input */}
           <div>
             <label className="mb-1 block text-xs text-purple-200">
               Chart Title
@@ -149,6 +155,8 @@ function AddChartModal({
               required
             />
           </div>
+
+          {/* Chart Type Input */}
           <div>
             <label className="mb-1 block text-xs text-purple-200">
               Chart Type
@@ -163,6 +171,8 @@ function AddChartModal({
               ))}
             </select>
           </div>
+
+          {/* Select Stocks Input */}
           <div>
             <label className="mb-1 block text-xs text-purple-200">
               Select Stocks
@@ -195,6 +205,7 @@ function AddChartModal({
                 </ul>
               )}
             </div>
+
             {/* Selected tickers */}
             {selectedStocks.length > 0 && (
               <div className="mt-2 flex flex-wrap gap-2">
@@ -216,6 +227,8 @@ function AddChartModal({
               </div>
             )}
           </div>
+
+          {/* Y-Axis Metric (Primary) */}
           <div>
             <label className="mb-1 block text-xs text-purple-200">
               Y-Axis Metric (Primary)
@@ -230,20 +243,8 @@ function AddChartModal({
               ))}
             </select>
           </div>
-          <div>
-            <label className="mb-1 block text-xs text-purple-200">
-              Y-Axis Metric (Secondary - Optional)
-            </label>
-            <select
-              className="w-full rounded-md border border-fuchsia-700/40 bg-[#231133] p-3 text-white focus:outline-none"
-              value={secondaryMetric}
-              onChange={(e) => setSecondaryMetric(e.target.value)}
-            >
-              {SECONDARY_METRICS.map((m) => (
-                <option key={m}>{m}</option>
-              ))}
-            </select>
-          </div>
+
+          {/* Start Date */}
           <div>
             <label className="mb-1 block text-xs text-purple-200">
               Start Date
@@ -256,6 +257,8 @@ function AddChartModal({
               required
             />
           </div>
+
+          {/* End Date */}
           <div>
             <label className="mb-1 block text-xs text-purple-200">
               End Date
@@ -267,6 +270,8 @@ function AddChartModal({
               onChange={(e) => setEndDate(e.target.value)}
             />
           </div>
+
+          {/* Cancel and Submit Buttons */}
           <div className="mt-2 flex justify-end gap-2">
             <button
               type="button"
@@ -294,6 +299,8 @@ function AddChartModal({
 export const Charting = () => {
   const [charts, setCharts] = useState<(ChartData | null)[]>([null]);
   const [modalOpen, setModalOpen] = useState(false);
+  const [welcomeOpen, setWelcomeOpen] = useState(true);
+  const [selectTypeOpen, setSelectTypeOpen] = useState(false);
 
   // Add a new chart to the first empty slot
   const handleAddChart = (chart: ChartData) => {
@@ -325,68 +332,82 @@ export const Charting = () => {
   };
 
   return (
-    <div className="font-inter bg-fuchisa min-h-screen text-white">
-      {/* ...header and other content... */}
-      <AddChartModal
-        open={modalOpen}
-        onClose={() => setModalOpen(false)}
-        onAdd={handleAddChart}
-      />
-      <div className="flex gap-8 px-8 py-8">
-        <div className="flex-1">
-          <div className="mb-2 text-xl font-semibold">Your Dashboard</div>
-          <div className="mb-6 text-sm text-purple-200">
-            Create and customize financial visualizations
-          </div>
-          <div className="grid grid-cols-2 grid-rows-2 gap-6">
-            {charts.map((chart, idx) =>
-              chart ? (
-                <div
-                  key={idx}
-                  className="relative rounded-2xl border-2 border-fuchsia-700/40 bg-[#181425] p-4 shadow-lg"
-                >
-                  <div className="mb-2 flex items-center justify-between">
-                    <span className="text-sm font-medium text-white">
-                      {chart.title}
-                    </span>
-                    <div className="flex gap-2">
-                      <button className="text-purple-300 hover:text-fuchsia-400">
-                        <FaRegEdit />
-                      </button>
-                      <button
-                        className="text-purple-300 hover:text-red-400"
-                        onClick={() => handleRemoveChart(idx)}
-                      >
-                        <FaTrash />
-                      </button>
+    <div className="font-inter bg-fuchisa flex min-h-screen text-white">
+      <VerticalNavbar />
+      <div className="flex-1">
+        <WelcomeDashboard
+          open={welcomeOpen}
+          onClose={() => {
+            setWelcomeOpen(false);
+            setSelectTypeOpen(true);
+          }}
+        />
+        <SelectDashboardType
+          open={selectTypeOpen}
+          onSelect={(type) => {
+            setSelectTypeOpen(false);
+            // *****IMPORTANT*****
+            // handle type selection here later
+          }}
+        />
+        <AddChartModal
+          open={modalOpen}
+          onClose={() => setModalOpen(false)}
+          onAdd={handleAddChart}
+        />
+        <div className="flex gap-8 px-8 py-8">
+          <div className="flex-1">
+            <div className="mb-2 text-xl font-semibold">Your Dashboard</div>
+            <div className="mb-6 text-sm text-purple-200">
+              Create and customize financial visualizations
+            </div>
+            <div className="grid grid-cols-2 grid-rows-2 gap-6">
+              {charts.map((chart, idx) =>
+                chart ? (
+                  <div
+                    key={idx}
+                    className="relative rounded-2xl border-2 border-fuchsia-700/40 bg-[#181425] p-4 shadow-lg"
+                  >
+                    <div className="mb-2 flex items-center justify-between">
+                      <span className="text-sm font-medium text-white">
+                        {chart.title}
+                      </span>
+                      <div className="flex gap-2">
+                        <button className="text-purple-300 hover:text-fuchsia-400">
+                          <FaRegEdit />
+                        </button>
+                        <button
+                          className="text-purple-300 hover:text-red-400"
+                          onClick={() => handleRemoveChart(idx)}
+                        >
+                          <FaTrash />
+                        </button>
+                      </div>
+                    </div>
+                    {/* Chart placeholder */}
+                    <div className="mb-2 flex h-200 items-center justify-center rounded-lg bg-[#16131f]">
+                      <span className="text-purple-400">
+                        <Chart
+                          tickers={chart.selectedStocks}
+                          metric={chart.primaryMetric}
+                          startDate={chart.startDate}
+                          endDate={chart.endDate}
+                          chartType={chart.chartType}
+                        />
+                      </span>
                     </div>
                   </div>
-                  {/* Chart placeholder */}
-                  <div className="mb-2 flex h-200 items-center justify-center rounded-lg bg-[#16131f]">
-                    <span className="text-purple-400">
-                      <Chart
-                        tickers={chart.selectedStocks}
-                        metric={chart.primaryMetric}
-                        startDate={chart.startDate}
-                        endDate={chart.endDate}
-                        chartType={chart.chartType}
-                      />
-                    </span>
+                ) : (
+                  <div
+                    key={idx}
+                    className="flex h-64 cursor-pointer items-center justify-center rounded-2xl border-2 border-[#28243a] bg-[#181425] transition hover:border-fuchsia-700/40"
+                    onClick={() => setModalOpen(true)}
+                  >
+                    <span className="text-lg text-purple-300">+ Add Chart</span>
                   </div>
-                </div>
-              ) : (
-                <div
-                  key={idx}
-                  className="flex h-64 cursor-pointer items-center justify-center rounded-2xl border-2 border-[#28243a] bg-[#181425] transition hover:border-fuchsia-700/40"
-                  onClick={() => setModalOpen(true)}
-                >
-                  <span className="text-lg text-purple-300">
-                    +<br />
-                    Add Chart
-                  </span>
-                </div>
-              )
-            )}
+                )
+              )}
+            </div>
           </div>
         </div>
       </div>

@@ -68,8 +68,11 @@ const LineChart = ({ metric, tickers, startDate, endDate }: LineChartProps) => {
     ) => {
       d3.select(ref.current).selectAll('*').remove();
 
-      const width = 700;
-      const height = 350;
+      const container = ref.current;
+      const width =
+        container && container.offsetWidth ? container.offsetWidth : 700;
+      const height =
+        container && container.offsetHeight ? container.offsetHeight : 400;
       const margin = { top: 40, right: 120, bottom: 60, left: 60 };
 
       // Get all unique dates

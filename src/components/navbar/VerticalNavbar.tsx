@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { FaBars, FaChartBar, FaHome, FaSearch } from 'react-icons/fa';
+import { FaBars, FaHome, FaSearch } from 'react-icons/fa';
 
 export default function VerticalNavbar() {
   const [collapsed, setCollapsed] = useState(false);

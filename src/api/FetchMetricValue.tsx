@@ -1,3 +1,6 @@
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
+console.log('API_BASE_URL:', API_BASE_URL);
 export async function fetchMetricValue(
   metric: string,
   ticker: string,
@@ -7,19 +10,22 @@ export async function fetchMetricValue(
   let url = '';
   switch (metric) {
     case 'Price To Earnings Ratio':
-      url = `http://localhost:8080/api/stocks/pe/${ticker}/${startDate}/${endDate}`;
+      url = `${API_BASE_URL}/stocks/pe/${ticker}/${startDate}/${endDate}`;
       break;
     case 'Price To Sales Ratio':
-      url = `http://localhost:8080/api/stocks/ps/${ticker}/${startDate}/${endDate}`;
+      url = `${API_BASE_URL}/stocks/ps/${ticker}/${startDate}/${endDate}`;
       break;
     case 'Market Cap':
-      url = `http://localhost:8080/api/stocks/marketCapHistory/${ticker}/${startDate}/${endDate}`;
+      url = `${API_BASE_URL}/stocks/marketCapHistory/${ticker}/${startDate}/${endDate}`;
       break;
     case 'Dividend Yield (%)':
-      url = `http://localhost:8080/api/stocks/dividendInfo/${ticker}/${startDate}/${endDate}`;
+      url = `${API_BASE_URL}/stocks/dividendInfo/${ticker}/${startDate}/${endDate}`;
       break;
     case 'Earnings Per Share':
-      url = `http://localhost:8080/api/stocks/eps/${ticker}/${startDate}/${endDate}`;
+      url = `${API_BASE_URL}/stocks/eps/${ticker}/${startDate}/${endDate}`;
+      break;
+    case 'Revenues':
+      url = `${API_BASE_URL}/stocks/revenues/${ticker}/${startDate}/${endDate}`;
       break;
     default:
       throw new Error('Unknown metric: ' + metric);
@@ -34,6 +40,7 @@ export async function fetchMetricValue(
   if (metric === 'Dividend Yield (%)') return { ticker, value: data.yield };
   if (metric === 'Earnings Per Share')
     return { ticker, value: data.earningsPerShare };
+  if (metric === 'Revenues') return { ticker, value: data.revenue };
   // Add more as needed
   return { ticker, value: null };
 }

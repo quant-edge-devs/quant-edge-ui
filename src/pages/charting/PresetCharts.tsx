@@ -1,0 +1,86 @@
+import { useState } from 'react';
+import LineChart from './chart-types/LineChart';
+
+interface PresetChartsProps {
+  onBack?: () => void;
+}
+
+const METRICS = [
+  { label: 'Revenues', value: 'Revenues' },
+  { label: 'P/S Ratio', value: 'Price To Sales Ratio' },
+  { label: 'P/E Ratio', value: 'Price To Earnings Ratio' },
+  { label: 'Market Cap', value: 'Market Cap' },
+  { label: 'Dividend Yield (%)', value: 'Dividend Yield (%)' },
+  { label: 'EPS', value: 'Earnings Per Share' },
+];
+
+const getDefaultDates = () => {
+  const end = new Date();
+  const start = new Date();
+  start.setFullYear(end.getFullYear() - 1);
+  return {
+    startDate: start.toISOString().slice(0, 10),
+    endDate: end.toISOString().slice(0, 10),
+  };
+};
+
+export default function PresetCharts({ onBack }: PresetChartsProps) {
+  const [selectedMetric, setSelectedMetric] = useState(METRICS[0].value);
+  const [ticker, setTicker] = useState('AAPL');
+  const { startDate, endDate } = getDefaultDates();
+  const [input, setInput] = useState('AAPL');
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    setTicker(input.trim().toUpperCase() || 'AAPL');
+  };
+
+  return (
+    <div className="min-h-screen bg-[#181425] p-4">
+      <div className="mb-6 flex items-center">
+        {onBack && (
+          <button
+            className="mr-4 rounded-lg border border-fuchsia-600 bg-black px-4 py-2 font-semibold text-white hover:bg-fuchsia-700"
+            onClick={onBack}
+          >
+            ← Back to Dashboard
+          </button>
+        )}
+        <h1 className="text-2xl font-bold text-white">Preset Charts</h1>
+      </div>
+      <form onSubmit={handleSearch} className="mb-6 flex max-w-xl gap-2">
+        <input
+          className="flex-1 rounded-lg border border-fuchsia-600 bg-black px-4 py-2 text-white focus:outline-none"
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          placeholder="Enter stock ticker (e.g. AAPL)"
+        />
+        <button
+          type="submit"
+          className="rounded-lg bg-fuchsia-600 px-4 py-2 font-semibold text-white hover:bg-fuchsia-700"
+        >
+          Search
+        </button>
+      </form>
+      <div className="mb-4 flex gap-2">
+        {METRICS.map((m) => (
+          <button
+            key={m.value}
+            className={`rounded-lg border border-fuchsia-600 px-4 py-2 font-semibold text-white transition ${selectedMetric === m.value ? 'bg-fuchsia-600' : 'bg-black hover:bg-fuchsia-700'}`}
+            onClick={() => setSelectedMetric(m.value)}
+          >
+            {m.label}
+          </button>
+        ))}
+      </div>
+      <div className="rounded-lg border border-fuchsia-600 bg-black p-4">
+        <LineChart
+          tickers={[ticker]}
+          metric={selectedMetric}
+          startDate={startDate}
+          endDate={endDate}
+        />
+      </div>
+    </div>
+  );
+}

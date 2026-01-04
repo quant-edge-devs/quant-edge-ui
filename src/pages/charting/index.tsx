@@ -4,6 +4,9 @@ import Chart from './RenderChart';
 import VerticalNavbar from '../../components/navbar/VerticalNavbar';
 import WelcomeDashboard from './welcome-modal/WelcomeDashboard';
 import SelectDashboardType from './welcome-modal/SelectDashboardType';
+import PresetCharts from './PresetCharts';
+
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 type ChartData = {
   title: string;
@@ -62,9 +65,7 @@ function AddChartModal({
         return;
       }
       try {
-        const response = await fetch(
-          `https://backend-service-1041518880178.us-central1.run.app/api/stocks?ticker=${query}`
-        );
+        const response = await fetch(`${API_BASE_URL}/stocks?ticker=${query}`);
         const data = await response.json();
         setResults(
           (data.tickerResults || []).map((item: any) => ({
@@ -301,6 +302,10 @@ export const Charting = () => {
   const [modalOpen, setModalOpen] = useState(false);
   const [welcomeOpen, setWelcomeOpen] = useState(true);
   const [selectTypeOpen, setSelectTypeOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState<'preset' | number>(0); // default to first custom chart
+  const [presetUnlocked, setPresetUnlocked] = useState(false);
+  const [editingTab, setEditingTab] = useState<number | null>(null);
+  const [tabNameInput, setTabNameInput] = useState('');
 
   // Add a new chart to the first empty slot
   const handleAddChart = (chart: ChartData) => {
@@ -308,11 +313,21 @@ export const Charting = () => {
     if (idx !== -1) {
       const updated: (ChartData | null)[] = [...charts];
       updated[idx] = chart;
-      // If all slots are now filled, add a new empty slot
       if (updated.every((c) => c !== null)) {
         (updated as (ChartData | null)[]).push(null);
       }
       setCharts(updated);
+      setActiveTab(idx); // Switch to new chart tab
+    }
+  };
+
+  // Rename chart tab
+  const handleRenameTab = (idx: number) => {
+    if (tabNameInput.trim() && charts[idx]) {
+      const updated = [...charts];
+      updated[idx] = { ...charts[idx], title: tabNameInput } as ChartData;
+      setCharts(updated);
+      setEditingTab(null);
     }
   };
 
@@ -346,70 +361,119 @@ export const Charting = () => {
           open={selectTypeOpen}
           onSelect={(type) => {
             setSelectTypeOpen(false);
-            // *****IMPORTANT*****
-            // handle type selection here later
+            if (type === 'preset') {
+              setPresetUnlocked(true);
+              setActiveTab('preset');
+            } else {
+              setActiveTab(0);
+            }
           }}
         />
+        {/* Tab Bar */}
+        <div className="flex items-center gap-2 border-b border-fuchsia-700/40 bg-[#181425] px-8 pt-4">
+          {presetUnlocked && (
+            <button
+              className={`border-b-2 px-6 py-2 font-semibold transition ${
+                activeTab === 'preset'
+                  ? 'border-fuchsia-600 text-fuchsia-400'
+                  : 'border-transparent text-white hover:text-fuchsia-400'
+              }`}
+              onClick={() => setActiveTab('preset')}
+            >
+              Preset Charts
+            </button>
+          )}
+          {charts.map((chart, idx) =>
+            chart ? (
+              <div key={idx} className="relative flex items-center">
+                {editingTab === idx ? (
+                  <input
+                    className="rounded border border-fuchsia-600 bg-[#231133] px-4 py-2 text-white focus:outline-none"
+                    value={tabNameInput}
+                    autoFocus
+                    onChange={(e) => setTabNameInput(e.target.value)}
+                    onBlur={() => handleRenameTab(idx)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') handleRenameTab(idx);
+                    }}
+                  />
+                ) : (
+                  <button
+                    className={`border-b-2 px-6 py-2 font-semibold transition ${
+                      activeTab === idx
+                        ? 'border-fuchsia-600 text-fuchsia-400'
+                        : 'border-transparent text-white hover:text-fuchsia-400'
+                    }`}
+                    onClick={() => setActiveTab(idx)}
+                    onDoubleClick={() => {
+                      setEditingTab(idx);
+                      setTabNameInput(chart.title);
+                    }}
+                  >
+                    {chart.title}
+                  </button>
+                )}
+              </div>
+            ) : null
+          )}
+          <button
+            className="ml-2 rounded-lg bg-fuchsia-600 px-4 py-2 font-semibold text-white hover:bg-fuchsia-700"
+            onClick={() => setModalOpen(true)}
+          >
+            + Add Chart
+          </button>
+        </div>
+        {/* Tab Content */}
+        {presetUnlocked && activeTab === 'preset' && <PresetCharts />}
+        {typeof activeTab === 'number' && charts[activeTab] && (
+          <div className="flex gap-8 px-8 py-8">
+            <div className="flex-1">
+              <div className="mb-2 text-xl font-semibold">
+                {charts[activeTab]?.title}
+              </div>
+              <div className="mb-6 text-sm text-purple-200">
+                Create and customize financial visualizations
+              </div>
+              <div className="relative rounded-2xl border-2 border-fuchsia-700/40 bg-[#181425] p-4 shadow-lg">
+                <div className="mb-2 flex items-center justify-between">
+                  <span className="text-sm font-medium text-white">
+                    {charts[activeTab]?.title}
+                  </span>
+                  <div className="flex gap-2">
+                    <button
+                      className="text-purple-300 hover:text-fuchsia-400"
+                      onClick={() => setEditingTab(activeTab)}
+                    >
+                      <FaRegEdit />
+                    </button>
+                    <button
+                      className="text-purple-300 hover:text-red-400"
+                      onClick={() => handleRemoveChart(activeTab)}
+                    >
+                      <FaTrash />
+                    </button>
+                  </div>
+                </div>
+                <div className="mb-2 flex h-200 items-center justify-center rounded-lg bg-[#16131f]">
+                  <span className="text-purple-400">
+                    <Chart
+                      tickers={charts[activeTab]?.selectedStocks}
+                      metric={charts[activeTab]?.primaryMetric}
+                      startDate={charts[activeTab]?.startDate}
+                      endDate={charts[activeTab]?.endDate}
+                      chartType={charts[activeTab]?.chartType}
+                    />
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
         <AddChartModal
           open={modalOpen}
           onClose={() => setModalOpen(false)}
           onAdd={handleAddChart}
         />
-        <div className="flex gap-8 px-8 py-8">
-          <div className="flex-1">
-            <div className="mb-2 text-xl font-semibold">Your Dashboard</div>
-            <div className="mb-6 text-sm text-purple-200">
-              Create and customize financial visualizations
-            </div>
-            <div className="grid grid-cols-2 grid-rows-2 gap-6">
-              {charts.map((chart, idx) =>
-                chart ? (
-                  <div
-                    key={idx}
-                    className="relative rounded-2xl border-2 border-fuchsia-700/40 bg-[#181425] p-4 shadow-lg"
-                  >
-                    <div className="mb-2 flex items-center justify-between">
-                      <span className="text-sm font-medium text-white">
-                        {chart.title}
-                      </span>
-                      <div className="flex gap-2">
-                        <button className="text-purple-300 hover:text-fuchsia-400">
-                          <FaRegEdit />
-                        </button>
-                        <button
-                          className="text-purple-300 hover:text-red-400"
-                          onClick={() => handleRemoveChart(idx)}
-                        >
-                          <FaTrash />
-                        </button>
-                      </div>
-                    </div>
-                    {/* Chart placeholder */}
-                    <div className="mb-2 flex h-200 items-center justify-center rounded-lg bg-[#16131f]">
-                      <span className="text-purple-400">
-                        <Chart
-                          tickers={chart.selectedStocks}
-                          metric={chart.primaryMetric}
-                          startDate={chart.startDate}
-                          endDate={chart.endDate}
-                          chartType={chart.chartType}
-                        />
-                      </span>
-                    </div>
-                  </div>
-                ) : (
-                  <div
-                    key={idx}
-                    className="flex h-64 cursor-pointer items-center justify-center rounded-2xl border-2 border-[#28243a] bg-[#181425] transition hover:border-fuchsia-700/40"
-                    onClick={() => setModalOpen(true)}
-                  >
-                    <span className="text-lg text-purple-300">+ Add Chart</span>
-                  </div>
-                )
-              )}
-            </div>
-          </div>
-        </div>
       </div>
     </div>
   );

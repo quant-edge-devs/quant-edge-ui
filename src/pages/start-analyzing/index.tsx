@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router';
 import VerticalNavbar from '../../components/navbar/VerticalNavbar';
+
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 type StockInfo = {
   ticker: string;
@@ -25,9 +26,7 @@ export const StartAnalyzing = () => {
         return;
       }
       try {
-        const response = await fetch(
-          `https://backend-service-1041518880178.us-central1.run.app/api/stocks?ticker=${query}`
-        );
+        const response = await fetch(`${API_BASE_URL}/stocks?ticker=${query}`);
         const data = await response.json();
         setResults(
           (data.tickerResults || []).map((item: any) => ({

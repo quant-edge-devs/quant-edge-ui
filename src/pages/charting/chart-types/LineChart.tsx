@@ -1,6 +1,8 @@
 import { useEffect, useRef } from 'react';
 import * as d3 from 'd3';
 
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
 type LineChartProps = {
   tickers: string[];
   metric: string;
@@ -29,7 +31,7 @@ const LineChart = ({ metric, tickers, startDate, endDate }: LineChartProps) => {
         // Fetch all data points for this ticker and metric
         const response = await fetch(
           // Use the same endpoint logic as in FetchMetricValue, but for a range
-          `http://localhost:8080/api/stocks/${
+          `${API_BASE_URL}/stocks/${
             metric === 'Price To Earnings Ratio'
               ? 'pe'
               : metric === 'Price To Sales Ratio'
@@ -40,13 +42,20 @@ const LineChart = ({ metric, tickers, startDate, endDate }: LineChartProps) => {
                     ? 'dividendInfo'
                     : metric === 'Earnings Per Share'
                       ? 'eps'
-                      : ''
+                      : metric === 'Revenues'
+                        ? 'revenues'
+                        : ''
           }/${ticker}/${startDate}/${endDate}`
         );
         const data = await response.json();
         // Map to { date, value } using fetchMetricValue logic
         let points: { date: string; value: number }[] = [];
-        if (Array.isArray(data)) {
+        if (metric === 'Revenues' && data && Array.isArray(data.monthlyRevenuePoints)) {
+          points = data.monthlyRevenuePoints.map((d: any) => ({
+            date: d.date,
+            value: d.revenue
+          }));
+        } else if (Array.isArray(data)) {
           points = data.map((d: any) => {
             let value = null;
             if (metric === 'Market Cap') value = d.marketCap;

@@ -417,7 +417,7 @@ export const Charting = () => {
             ) : null
           )}
           <button
-            className="ml-2 rounded-lg bg-fuchsia-600 px-4 py-2 font-semibold text-white hover:bg-fuchsia-700"
+            className="ml-2 cursor-pointer rounded-lg bg-fuchsia-600 px-4 py-2 font-semibold text-white hover:bg-fuchsia-700"
             onClick={() => setModalOpen(true)}
           >
             + Add Chart

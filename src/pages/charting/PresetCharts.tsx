@@ -57,7 +57,7 @@ export default function PresetCharts({ onBack }: PresetChartsProps) {
         />
         <button
           type="submit"
-          className="rounded-lg bg-fuchsia-600 px-4 py-2 font-semibold text-white hover:bg-fuchsia-700"
+          className="cursor-pointer rounded-lg bg-fuchsia-600 px-4 py-2 font-semibold text-white hover:bg-fuchsia-700"
         >
           Search
         </button>
@@ -66,7 +66,7 @@ export default function PresetCharts({ onBack }: PresetChartsProps) {
         {METRICS.map((m) => (
           <button
             key={m.value}
-            className={`rounded-lg border border-fuchsia-600 px-4 py-2 font-semibold text-white transition ${selectedMetric === m.value ? 'bg-fuchsia-600' : 'bg-black hover:bg-fuchsia-700'}`}
+            className={`cursor-pointer rounded-lg border border-fuchsia-600 px-4 py-2 font-semibold text-white transition ${selectedMetric === m.value ? 'bg-fuchsia-600' : 'bg-black hover:bg-fuchsia-700'}`}
             onClick={() => setSelectedMetric(m.value)}
           >
             {m.label}

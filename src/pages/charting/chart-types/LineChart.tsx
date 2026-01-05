@@ -50,10 +50,14 @@ const LineChart = ({ metric, tickers, startDate, endDate }: LineChartProps) => {
         const data = await response.json();
         // Map to { date, value } using fetchMetricValue logic
         let points: { date: string; value: number }[] = [];
-        if (metric === 'Revenues' && data && Array.isArray(data.monthlyRevenuePoints)) {
+        if (
+          metric === 'Revenues' &&
+          data &&
+          Array.isArray(data.monthlyRevenuePoints)
+        ) {
           points = data.monthlyRevenuePoints.map((d: any) => ({
             date: d.date,
-            value: d.revenue
+            value: d.revenue,
           }));
         } else if (Array.isArray(data)) {
           points = data.map((d: any) => {
@@ -122,7 +126,26 @@ const LineChart = ({ metric, tickers, startDate, endDate }: LineChartProps) => {
         .attr('width', width)
         .attr('height', height);
 
+      // Y-axis number formatter
+      const formatAbbrev = (domainValue: d3.NumberValue) => {
+        const num =
+          typeof domainValue === 'number'
+            ? domainValue
+            : Number(domainValue.valueOf());
+        if (num >= 1e12) return (num / 1e12).toFixed(2) + 'T';
+        if (num >= 1e9) return (num / 1e9).toFixed(2) + 'B';
+        if (num >= 1e6) return (num / 1e6).toFixed(2) + 'M';
+        return num.toString();
+      };
+
       // Axes
+      svg
+        .append('g')
+        .attr('transform', `translate(${margin.left},0)`)
+        .call(d3.axisLeft(y).tickFormat(formatAbbrev))
+        .selectAll('text')
+        .attr('fill', '#fff');
+
       svg
         .append('g')
         .attr('transform', `translate(0,${height - margin.bottom})`)
@@ -136,13 +159,6 @@ const LineChart = ({ metric, tickers, startDate, endDate }: LineChartProps) => {
         .attr('fill', '#fff')
         .attr('transform', 'rotate(-30)')
         .style('text-anchor', 'end');
-
-      svg
-        .append('g')
-        .attr('transform', `translate(${margin.left},0)`)
-        .call(d3.axisLeft(y))
-        .selectAll('text')
-        .attr('fill', '#fff');
 
       // Axis labels
       svg

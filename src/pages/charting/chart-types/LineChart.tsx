@@ -114,9 +114,14 @@ const LineChart = ({ metric, tickers, startDate, endDate }: LineChartProps) => {
         .domain(allDates)
         .range([margin.left, width - margin.right]);
 
+      // Ensure y-axis always includes zero
+      const yMin = d3.min(data, (d) => d3.min(d.points, (p) => p.value)) ?? 0;
+      const yMax = d3.max(data, (d) => d3.max(d.points, (p) => p.value)) ?? 1;
+      const yDomainMin = Math.min(0, yMin);
+      const yDomainMax = Math.max(0, yMax);
       const y = d3
         .scaleLinear()
-        .domain([0, d3.max(data, (d) => d3.max(d.points, (p) => p.value)) || 1])
+        .domain([yDomainMin, yDomainMax])
         .nice()
         .range([height - margin.bottom, margin.top]);
 
@@ -234,6 +239,19 @@ const LineChart = ({ metric, tickers, startDate, endDate }: LineChartProps) => {
             d3.select(ref.current).select('.tooltip').style('opacity', 0);
           });
       });
+
+      // Draw zero line if zero is within the domain
+      if (yMin < 0 || yMax > 0) {
+        svg
+          .append('line')
+          .attr('x1', margin.left)
+          .attr('x2', width - margin.right)
+          .attr('y1', y(0))
+          .attr('y2', y(0))
+          .attr('stroke', '#888')
+          .attr('stroke-width', 1)
+          .attr('stroke-dasharray', '4,2');
+      }
 
       // Legend
       const legend = svg

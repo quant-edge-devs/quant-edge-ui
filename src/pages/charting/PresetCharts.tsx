@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import LineChart from './chart-types/LineChart';
+import BarChart from './chart-types/BarChart';
 
 interface PresetChartsProps {
   onBack?: () => void;
@@ -14,21 +15,34 @@ const METRICS = [
   { label: 'EPS', value: 'Earnings Per Share' },
 ];
 
-const getDefaultDates = () => {
+const TIME_FRAMES = [
+  { label: '1 Year', value: 1 },
+  { label: '3 Years', value: 3 },
+  { label: '5 Years', value: 5 },
+];
+
+const CHART_TYPES = [
+  { label: 'Line Chart', value: 'line' },
+  { label: 'Bar Chart', value: 'bar' },
+];
+
+function getDates(years: number) {
   const end = new Date();
   const start = new Date();
-  start.setFullYear(end.getFullYear() - 1);
+  start.setFullYear(end.getFullYear() - years);
   return {
     startDate: start.toISOString().slice(0, 10),
     endDate: end.toISOString().slice(0, 10),
   };
-};
+}
 
 export default function PresetCharts({ onBack }: PresetChartsProps) {
   const [selectedMetric, setSelectedMetric] = useState(METRICS[0].value);
   const [ticker, setTicker] = useState('AAPL');
-  const { startDate, endDate } = getDefaultDates();
   const [input, setInput] = useState('AAPL');
+  const [selectedTimeFrame, setSelectedTimeFrame] = useState(1);
+  const [selectedChartType, setSelectedChartType] = useState<'line' | 'bar'>('line');
+  const { startDate, endDate } = getDates(selectedTimeFrame);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -62,7 +76,7 @@ export default function PresetCharts({ onBack }: PresetChartsProps) {
           Search
         </button>
       </form>
-      <div className="mb-4 flex gap-2">
+      <div className="mb-4 flex items-center gap-2">
         {METRICS.map((m) => (
           <button
             key={m.value}
@@ -72,14 +86,43 @@ export default function PresetCharts({ onBack }: PresetChartsProps) {
             {m.label}
           </button>
         ))}
+        <select
+          className="ml-4 cursor-pointer rounded-lg border border-fuchsia-600 bg-black px-4 py-2 text-white"
+          value={selectedTimeFrame}
+          onChange={(e) => setSelectedTimeFrame(Number(e.target.value))}
+        >
+          {TIME_FRAMES.map((tf) => (
+            <option key={tf.value} value={tf.value}>
+              {tf.label}
+            </option>
+          ))}
+        </select>
+        <select
+          className="ml-4 cursor-pointer rounded-lg border border-fuchsia-600 bg-black px-4 py-2 text-white"
+          value={selectedChartType}
+          onChange={e => setSelectedChartType(e.target.value as 'line' | 'bar')}
+        >
+          {CHART_TYPES.map((ct) => (
+            <option key={ct.value} value={ct.value}>{ct.label}</option>
+          ))}
+        </select>
       </div>
       <div className="rounded-lg border border-fuchsia-600 bg-black p-4">
-        <LineChart
-          tickers={[ticker]}
-          metric={selectedMetric}
-          startDate={startDate}
-          endDate={endDate}
-        />
+        {selectedChartType === 'line' ? (
+          <LineChart
+            tickers={[ticker]}
+            metric={selectedMetric}
+            startDate={startDate}
+            endDate={endDate}
+          />
+        ) : (
+          <BarChart
+            tickers={[ticker]}
+            metric={selectedMetric}
+            startDate={startDate}
+            endDate={endDate}
+          />
+        )}
       </div>
     </div>
   );

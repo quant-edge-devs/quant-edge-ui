@@ -27,6 +27,9 @@ export async function fetchMetricValue(
     case 'Revenues':
       url = `${API_BASE_URL}/stocks/revenues/${ticker}/${startDate}/${endDate}`;
       break;
+    case 'Net Income':
+      url = `${API_BASE_URL}/stocks/netIncome/${ticker}/${startDate}/${endDate}`;
+      break;
     default:
       throw new Error('Unknown metric: ' + metric);
   }

@@ -44,7 +44,9 @@ const LineChart = ({ metric, tickers, startDate, endDate }: LineChartProps) => {
                       ? 'eps'
                       : metric === 'Revenues'
                         ? 'revenues'
-                        : ''
+                        : metric === 'Net Income'
+                          ? 'netIncome'
+                          : ''
           }/${ticker}/${startDate}/${endDate}`
         );
         const data = await response.json();
@@ -67,6 +69,7 @@ const LineChart = ({ metric, tickers, startDate, endDate }: LineChartProps) => {
             else if (metric === 'Price To Earnings Ratio') value = d.peRatio;
             else if (metric === 'Dividend Yield (%)') value = d.yield;
             else if (metric === 'Earnings Per Share') value = d.eps;
+            else if (metric === 'Net Income') value = d.ttmNetIncome;
             return { date: d.date, value };
           });
         }
@@ -224,6 +227,7 @@ const LineChart = ({ metric, tickers, startDate, endDate }: LineChartProps) => {
           .attr('r', 3)
           .attr('fill', COLORS[i % COLORS.length])
           .on('mouseover', function (event, d) {
+            const containerRect = ref.current?.getBoundingClientRect();
             d3.select(ref.current)
               .select('.tooltip')
               .style('opacity', 1)
@@ -232,8 +236,21 @@ const LineChart = ({ metric, tickers, startDate, endDate }: LineChartProps) => {
                   d.date
                 )}<br/>${metric}: ${d.value !== null && d.value !== undefined ? d.value.toFixed(2) : 'N/A'}`
               )
-              .style('left', event.offsetX + 20 + 'px')
-              .style('top', event.offsetY + 'px');
+              .style(
+                'left',
+                event.clientX - (containerRect?.left ?? 0) + 20 + 'px'
+              )
+              .style('top', event.clientY - (containerRect?.top ?? 0) + 'px');
+          })
+          .on('mousemove', function (event) {
+            const containerRect = ref.current?.getBoundingClientRect();
+            d3.select(ref.current)
+              .select('.tooltip')
+              .style(
+                'left',
+                event.clientX - (containerRect?.left ?? 0) + 20 + 'px'
+              )
+              .style('top', event.clientY - (containerRect?.top ?? 0) + 'px');
           })
           .on('mouseout', function () {
             d3.select(ref.current).select('.tooltip').style('opacity', 0);

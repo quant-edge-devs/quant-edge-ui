@@ -24,6 +24,8 @@ const PRIMARY_METRICS = [
   'Market Cap',
   'Dividend Yield (%)',
   'Earnings Per Share',
+  'Revenues',
+  'Net Income',
 ];
 const SECONDARY_METRICS = [
   'None',
@@ -32,6 +34,7 @@ const SECONDARY_METRICS = [
   'Market Cap',
   'Dividend Yield (%)',
   'Earnings Per Share',
+  'Revenues', // Added Revenues
 ];
 const CHART_TYPE = ['Bar Chart', 'Line Chart'];
 
@@ -51,7 +54,6 @@ function AddChartModal({
   const [secondaryMetric, setSecondaryMetric] = useState(SECONDARY_METRICS[0]);
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
-
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<{ ticker: string; name: string }[]>(
     []

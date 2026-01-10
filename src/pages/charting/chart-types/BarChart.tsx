@@ -42,7 +42,9 @@ const BarChart = ({ tickers, metric, startDate, endDate }: BarChartProps) => {
                       ? 'eps'
                       : metric === 'Revenues'
                         ? 'revenues'
-                        : ''
+                        : metric === 'Net Income'
+                          ? 'netIncome'
+                          : ''
           }/${ticker}/${startDate}/${endDate}`
         );
         const data = await response.json();
@@ -64,6 +66,7 @@ const BarChart = ({ tickers, metric, startDate, endDate }: BarChartProps) => {
             else if (metric === 'Price To Earnings Ratio') value = d.peRatio;
             else if (metric === 'Dividend Yield (%)') value = d.yield;
             else if (metric === 'Earnings Per Share') value = d.eps;
+            else if (metric === 'Net Income') value = d.ttmNetIncome;
             return { date: d.date, value };
           });
         }
@@ -209,10 +212,7 @@ const BarChart = ({ tickers, metric, startDate, endDate }: BarChartProps) => {
         .attr('height', (d) =>
           d.value !== null ? Math.abs(y(0) - y(d.value)) : 0
         )
-        .attr(
-          'fill',
-          (d, i) => COLORS[tickers.indexOf(d.ticker) % COLORS.length]
-        )
+        .attr('fill', (d) => COLORS[tickers.indexOf(d.ticker) % COLORS.length])
         .on('mouseover', function (event, d) {
           tooltip
             .style('opacity', 1)
@@ -228,7 +228,7 @@ const BarChart = ({ tickers, metric, startDate, endDate }: BarChartProps) => {
             .style('left', event.offsetX + 20 + 'px')
             .style('top', event.offsetY + 'px');
         })
-        .on('mouseout', function (event, d) {
+        .on('mouseout', function (_, d) {
           tooltip.style('opacity', 0);
           d3.select(this).attr(
             'fill',

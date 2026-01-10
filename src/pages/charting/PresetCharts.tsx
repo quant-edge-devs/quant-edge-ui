@@ -13,6 +13,7 @@ const METRICS = [
   { label: 'Market Cap', value: 'Market Cap' },
   { label: 'Dividend Yield (%)', value: 'Dividend Yield (%)' },
   { label: 'EPS', value: 'Earnings Per Share' },
+  { label: 'Net Income', value: 'Net Income' },
 ];
 
 const TIME_FRAMES = [
@@ -41,7 +42,9 @@ export default function PresetCharts({ onBack }: PresetChartsProps) {
   const [ticker, setTicker] = useState('AAPL');
   const [input, setInput] = useState('AAPL');
   const [selectedTimeFrame, setSelectedTimeFrame] = useState(1);
-  const [selectedChartType, setSelectedChartType] = useState<'line' | 'bar'>('line');
+  const [selectedChartType, setSelectedChartType] = useState<'line' | 'bar'>(
+    'line'
+  );
   const { startDate, endDate } = getDates(selectedTimeFrame);
 
   const handleSearch = (e: React.FormEvent) => {
@@ -100,10 +103,14 @@ export default function PresetCharts({ onBack }: PresetChartsProps) {
         <select
           className="ml-4 cursor-pointer rounded-lg border border-fuchsia-600 bg-black px-4 py-2 text-white"
           value={selectedChartType}
-          onChange={e => setSelectedChartType(e.target.value as 'line' | 'bar')}
+          onChange={(e) =>
+            setSelectedChartType(e.target.value as 'line' | 'bar')
+          }
         >
           {CHART_TYPES.map((ct) => (
-            <option key={ct.value} value={ct.value}>{ct.label}</option>
+            <option key={ct.value} value={ct.value}>
+              {ct.label}
+            </option>
           ))}
         </select>
       </div>

@@ -8,19 +8,35 @@ type BarChartProps = {
   metric: string;
   startDate: string;
   endDate: string;
+  interval?: string; // Add interval prop
 };
 
 const COLORS = d3.schemeCategory10;
 
 function getQuarterLabel(dateStr: string) {
+  // Handle 'YYYY-QN' format
+  const match = dateStr.match(/^(\d{4})-Q(\d)$/);
+  if (match) {
+    return `Q${match[2]} ${match[1]}`;
+  }
+  // Fallback to standard date
   const date = new Date(dateStr);
-  const year = date.getFullYear();
-  const month = date.getMonth();
-  const quarter = Math.floor(month / 3) + 1;
-  return `Q${quarter} ${year}`;
+  if (!isNaN(date.getTime())) {
+    const year = date.getFullYear();
+    const month = date.getMonth();
+    const quarter = Math.floor(month / 3) + 1;
+    return `Q${quarter} ${year}`;
+  }
+  return dateStr; // fallback: just return the string
 }
 
-const BarChart = ({ tickers, metric, startDate, endDate }: BarChartProps) => {
+const BarChart = ({
+  tickers,
+  metric,
+  startDate,
+  endDate,
+  interval = 'quarter',
+}: BarChartProps) => {
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -28,25 +44,25 @@ const BarChart = ({ tickers, metric, startDate, endDate }: BarChartProps) => {
 
     const fetchData = async () => {
       const promises = tickers.map(async (ticker) => {
-        const response = await fetch(
-          `${API_BASE_URL}/stocks/${
-            metric === 'Price To Earnings Ratio'
-              ? 'pe'
-              : metric === 'Price To Sales Ratio'
-                ? 'ps'
-                : metric === 'Market Cap'
-                  ? 'marketCapHistory'
-                  : metric === 'Dividend Yield (%)'
-                    ? 'dividendInfo'
-                    : metric === 'Earnings Per Share'
-                      ? 'eps'
-                      : metric === 'Revenues'
-                        ? 'revenues'
-                        : metric === 'Net Income'
-                          ? 'netIncome'
-                          : ''
-          }/${ticker}/${startDate}/${endDate}`
-        );
+        const endpoint =
+          metric === 'Market Cap'
+            ? `${API_BASE_URL}/stocks/marketCapHistory/${ticker}/${startDate}/${endDate}`
+            : `${API_BASE_URL}/stocks/${
+                metric === 'Price To Earnings Ratio'
+                  ? 'pe'
+                  : metric === 'Price To Sales Ratio'
+                    ? 'ps'
+                    : metric === 'Dividend Yield (%)'
+                      ? 'dividendInfo'
+                      : metric === 'Earnings Per Share'
+                        ? 'eps'
+                        : metric === 'Revenues'
+                          ? 'revenues'
+                          : metric === 'Net Income'
+                            ? 'netIncome'
+                            : ''
+              }/${ticker}/${startDate}/${endDate}/${interval}`;
+        const response = await fetch(endpoint);
         const data = await response.json();
         let points: { date: string; value: number }[] = [];
         if (
@@ -56,7 +72,7 @@ const BarChart = ({ tickers, metric, startDate, endDate }: BarChartProps) => {
         ) {
           points = data.monthlyRevenuePoints.map((d: any) => ({
             date: d.date,
-            value: d.revenue,
+            value: d.revenueActual,
           }));
         } else if (Array.isArray(data)) {
           points = data.map((d: any) => {
@@ -295,7 +311,7 @@ const BarChart = ({ tickers, metric, startDate, endDate }: BarChartProps) => {
     };
 
     fetchData();
-  }, [tickers, metric, startDate, endDate]);
+  }, [tickers, metric, startDate, endDate, interval]);
 
   return <div ref={ref} />;
 };

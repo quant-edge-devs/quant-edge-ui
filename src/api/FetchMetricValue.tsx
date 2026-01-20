@@ -10,25 +10,25 @@ export async function fetchMetricValue(
   let url = '';
   switch (metric) {
     case 'Price To Earnings Ratio':
-      url = `${API_BASE_URL}/stocks/pe/${ticker}/${startDate}/${endDate}`;
+      url = `${API_BASE_URL}/stocks/pe/${ticker}/${startDate}/${endDate}/{interval}`;
       break;
     case 'Price To Sales Ratio':
-      url = `${API_BASE_URL}/stocks/ps/${ticker}/${startDate}/${endDate}`;
+      url = `${API_BASE_URL}/stocks/ps/${ticker}/${startDate}/${endDate}/{interval}`;
       break;
     case 'Market Cap':
       url = `${API_BASE_URL}/stocks/marketCapHistory/${ticker}/${startDate}/${endDate}`;
       break;
     case 'Dividend Yield (%)':
-      url = `${API_BASE_URL}/stocks/dividendInfo/${ticker}/${startDate}/${endDate}`;
+      url = `${API_BASE_URL}/stocks/dividendInfo/${ticker}/${startDate}/${endDate}/{interval}`;
       break;
     case 'Earnings Per Share':
-      url = `${API_BASE_URL}/stocks/eps/${ticker}/${startDate}/${endDate}`;
+      url = `${API_BASE_URL}/stocks/eps/${ticker}/${startDate}/${endDate}/{interval}`;
       break;
     case 'Revenues':
-      url = `${API_BASE_URL}/stocks/revenues/${ticker}/${startDate}/${endDate}`;
+      url = `${API_BASE_URL}/stocks/revenues/${ticker}/${startDate}/${endDate}/{interval}`;
       break;
     case 'Net Income':
-      url = `${API_BASE_URL}/stocks/netIncome/${ticker}/${startDate}/${endDate}`;
+      url = `${API_BASE_URL}/stocks/netIncome/${ticker}/${startDate}/${endDate}/{interval}`;
       break;
     default:
       throw new Error('Unknown metric: ' + metric);

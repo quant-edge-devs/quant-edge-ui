@@ -27,6 +27,11 @@ const CHART_TYPES = [
   { label: 'Bar Chart', value: 'bar' },
 ];
 
+const INTERVALS = [
+  { label: 'Quarterly', value: 'quarter' },
+  { label: 'Annual', value: 'annual' },
+];
+
 function getDates(years: number) {
   const end = new Date();
   const start = new Date();
@@ -45,6 +50,7 @@ export default function PresetCharts({ onBack }: PresetChartsProps) {
   const [selectedChartType, setSelectedChartType] = useState<'line' | 'bar'>(
     'line'
   );
+  const [selectedInterval, setSelectedInterval] = useState('quarter');
   const { startDate, endDate } = getDates(selectedTimeFrame);
 
   const handleSearch = (e: React.FormEvent) => {
@@ -113,6 +119,17 @@ export default function PresetCharts({ onBack }: PresetChartsProps) {
             </option>
           ))}
         </select>
+        <select
+          className="ml-4 cursor-pointer rounded-lg border border-fuchsia-600 bg-black px-4 py-2 text-white"
+          value={selectedInterval}
+          onChange={(e) => setSelectedInterval(e.target.value)}
+        >
+          {INTERVALS.map((intv) => (
+            <option key={intv.value} value={intv.value}>
+              {intv.label}
+            </option>
+          ))}
+        </select>
       </div>
       <div className="rounded-lg border border-fuchsia-600 bg-black p-4">
         {selectedChartType === 'line' ? (
@@ -121,6 +138,7 @@ export default function PresetCharts({ onBack }: PresetChartsProps) {
             metric={selectedMetric}
             startDate={startDate}
             endDate={endDate}
+            interval={selectedInterval}
           />
         ) : (
           <BarChart
@@ -128,6 +146,7 @@ export default function PresetCharts({ onBack }: PresetChartsProps) {
             metric={selectedMetric}
             startDate={startDate}
             endDate={endDate}
+            interval={selectedInterval}
           />
         )}
       </div>

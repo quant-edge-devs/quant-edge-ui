@@ -8,19 +8,35 @@ type LineChartProps = {
   metric: string;
   startDate: string;
   endDate: string;
+  interval?: string; // Add interval prop
 };
 
 const COLORS = d3.schemeCategory10;
 
 function getQuarterLabel(dateStr: string) {
+  // Handle 'YYYY-QN' format
+  const match = dateStr.match(/^(\d{4})-Q(\d)$/);
+  if (match) {
+    return `Q${match[2]} ${match[1]}`;
+  }
+  // Fallback to standard date
   const date = new Date(dateStr);
-  const year = date.getFullYear();
-  const month = date.getMonth();
-  const quarter = Math.floor(month / 3) + 1;
-  return `Q${quarter} ${year}`;
+  if (!isNaN(date.getTime())) {
+    const year = date.getFullYear();
+    const month = date.getMonth();
+    const quarter = Math.floor(month / 3) + 1;
+    return `Q${quarter} ${year}`;
+  }
+  return dateStr; // fallback: just return the string
 }
 
-const LineChart = ({ metric, tickers, startDate, endDate }: LineChartProps) => {
+const LineChart = ({
+  metric,
+  tickers,
+  startDate,
+  endDate,
+  interval = 'quarter', // Set default value for interval
+}: LineChartProps) => {
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -28,27 +44,26 @@ const LineChart = ({ metric, tickers, startDate, endDate }: LineChartProps) => {
 
     const fetchData = async () => {
       const promises = tickers.map(async (ticker) => {
-        // Fetch all data points for this ticker and metric
-        const response = await fetch(
-          // Use the same endpoint logic as in FetchMetricValue, but for a range
-          `${API_BASE_URL}/stocks/${
-            metric === 'Price To Earnings Ratio'
-              ? 'pe'
-              : metric === 'Price To Sales Ratio'
-                ? 'ps'
-                : metric === 'Market Cap'
-                  ? 'marketCapHistory'
-                  : metric === 'Dividend Yield (%)'
-                    ? 'dividendInfo'
-                    : metric === 'Earnings Per Share'
-                      ? 'eps'
-                      : metric === 'Revenues'
-                        ? 'revenues'
-                        : metric === 'Net Income'
-                          ? 'netIncome'
-                          : ''
-          }/${ticker}/${startDate}/${endDate}`
-        );
+        // Build endpoint, only add interval for metrics that support it
+        const endpoint =
+          metric === 'Market Cap'
+            ? `${API_BASE_URL}/stocks/marketCapHistory/${ticker}/${startDate}/${endDate}`
+            : `${API_BASE_URL}/stocks/${
+                metric === 'Price To Earnings Ratio'
+                  ? 'pe'
+                  : metric === 'Price To Sales Ratio'
+                    ? 'ps'
+                    : metric === 'Dividend Yield (%)'
+                      ? 'dividendInfo'
+                      : metric === 'Earnings Per Share'
+                        ? 'eps'
+                        : metric === 'Revenues'
+                          ? 'revenues'
+                          : metric === 'Net Income'
+                            ? 'netIncome'
+                            : ''
+              }/${ticker}/${startDate}/${endDate}/${interval}`;
+        const response = await fetch(endpoint);
         const data = await response.json();
         // Map to { date, value } using fetchMetricValue logic
         let points: { date: string; value: number }[] = [];
@@ -58,8 +73,8 @@ const LineChart = ({ metric, tickers, startDate, endDate }: LineChartProps) => {
           Array.isArray(data.monthlyRevenuePoints)
         ) {
           points = data.monthlyRevenuePoints.map((d: any) => ({
-            date: d.date,
-            value: d.revenue,
+            date: d.date, // now in 'YYYY-QN' format
+            value: d.revenueActual,
           }));
         } else if (Array.isArray(data)) {
           points = data.map((d: any) => {
@@ -227,7 +242,6 @@ const LineChart = ({ metric, tickers, startDate, endDate }: LineChartProps) => {
           .attr('r', 3)
           .attr('fill', COLORS[i % COLORS.length])
           .on('mouseover', function (event, d) {
-            const containerRect = ref.current?.getBoundingClientRect();
             d3.select(ref.current)
               .select('.tooltip')
               .style('opacity', 1)
@@ -236,21 +250,8 @@ const LineChart = ({ metric, tickers, startDate, endDate }: LineChartProps) => {
                   d.date
                 )}<br/>${metric}: ${d.value !== null && d.value !== undefined ? d.value.toFixed(2) : 'N/A'}`
               )
-              .style(
-                'left',
-                event.clientX - (containerRect?.left ?? 0) + 20 + 'px'
-              )
-              .style('top', event.clientY - (containerRect?.top ?? 0) + 'px');
-          })
-          .on('mousemove', function (event) {
-            const containerRect = ref.current?.getBoundingClientRect();
-            d3.select(ref.current)
-              .select('.tooltip')
-              .style(
-                'left',
-                event.clientX - (containerRect?.left ?? 0) + 20 + 'px'
-              )
-              .style('top', event.clientY - (containerRect?.top ?? 0) + 'px');
+              .style('left', event.offsetX + 20 + 'px')
+              .style('top', event.offsetY + 'px');
           })
           .on('mouseout', function () {
             d3.select(ref.current).select('.tooltip').style('opacity', 0);

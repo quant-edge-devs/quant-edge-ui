@@ -9,25 +9,22 @@ type BarChartProps = {
   startDate: string;
   endDate: string;
   interval?: string; // Add interval prop
+  setLoading?: (loading: boolean) => void;
 };
 
 const COLORS = d3.schemeCategory10;
 
-function getQuarterLabel(dateStr: string) {
-  // Handle 'YYYY-QN' format
-  const match = dateStr.match(/^(\d{4})-Q(\d)$/);
-  if (match) {
-    return `Q${match[2]} ${match[1]}`;
+function getXAxisLabel(dateStr: string, interval: string) {
+  if (interval === 'annual') {
+    // Just the year
+    return dateStr.slice(0, 4);
   }
-  // Fallback to standard date
+  // Quarterly: show month and year
   const date = new Date(dateStr);
   if (!isNaN(date.getTime())) {
-    const year = date.getFullYear();
-    const month = date.getMonth();
-    const quarter = Math.floor(month / 3) + 1;
-    return `Q${quarter} ${year}`;
+    return date.toLocaleString('en-US', { month: 'short', year: 'numeric' });
   }
-  return dateStr; // fallback: just return the string
+  return dateStr;
 }
 
 const BarChart = ({
@@ -36,12 +33,12 @@ const BarChart = ({
   startDate,
   endDate,
   interval = 'quarter',
+  setLoading,
 }: BarChartProps) => {
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!tickers.length || !metric) return;
-
     const fetchData = async () => {
       const promises = tickers.map(async (ticker) => {
         const endpoint =
@@ -90,6 +87,7 @@ const BarChart = ({
       });
       const results = await Promise.all(promises);
       drawChart(results);
+      setLoading?.(false);
     };
 
     const drawChart = (
@@ -108,17 +106,19 @@ const BarChart = ({
         new Set(data.flatMap((d) => d.points.map((p) => p.date)))
       ).sort();
 
-      // Map each date to its quarter label
-      const dateToQuarter = Object.fromEntries(
-        allDates.map((d) => [d, getQuarterLabel(d)])
+      // Map each date to its x-axis label
+      const dateToLabel = Object.fromEntries(
+        allDates.map((d) => [d, getXAxisLabel(d, interval)])
       );
-      // Get unique quarters in order
-      const allQuarters = Array.from(
-        new Set(allDates.map((d) => dateToQuarter[d]))
+
+      // Get unique labels in order
+      const allLabels = Array.from(
+        new Set(allDates.map((d) => dateToLabel[d]))
       );
-      // For x axis ticks, use one date per quarter
-      const quarterFirstDates = allQuarters.map((q) =>
-        allDates.find((d) => dateToQuarter[d] === q)
+
+      // For x axis ticks, use one date per label
+      const labelFirstDates = allLabels.map((lbl) =>
+        allDates.find((d) => dateToLabel[d] === lbl)
       );
 
       // X scale (dates)
@@ -180,8 +180,8 @@ const BarChart = ({
         .call(
           d3
             .axisBottom(x0)
-            .tickValues(quarterFirstDates as string[])
-            .tickFormat((d) => dateToQuarter[d as string])
+            .tickValues(labelFirstDates as string[])
+            .tickFormat((d) => dateToLabel[d as string])
         )
         .selectAll('text')
         .attr('fill', '#fff')
@@ -233,7 +233,7 @@ const BarChart = ({
           tooltip
             .style('opacity', 1)
             .html(
-              `<strong>${d.ticker}</strong><br/>${d.date}<br/>${metric}: ${d.value !== null && d.value !== undefined ? formatAbbrev(d.value) : 'N/A'}`
+              `<strong>${d.ticker}</strong><br/>${getXAxisLabel(d.date, interval)}<br/>${metric}: ${d.value !== null && d.value !== undefined ? formatAbbrev(d.value) : 'N/A'}`
             )
             .style('left', event.offsetX + 20 + 'px')
             .style('top', event.offsetY + 'px');
@@ -271,7 +271,7 @@ const BarChart = ({
         .attr('text-anchor', 'middle')
         .attr('fill', '#fff')
         .attr('font-size', 14)
-        .text('Date');
+        .text(interval === 'annual' ? 'Year' : 'Month');
 
       svg
         .append('text')

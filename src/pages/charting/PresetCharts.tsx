@@ -51,15 +51,25 @@ export default function PresetCharts({ onBack }: PresetChartsProps) {
     'line'
   );
   const [selectedInterval, setSelectedInterval] = useState('quarter');
+  const [loading, setLoading] = useState(false);
   const { startDate, endDate } = getDates(selectedTimeFrame);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
+    setLoading(true);
     setTicker(input.trim().toUpperCase() || 'AAPL');
   };
 
   return (
     <div className="min-h-screen bg-[#181425] p-4">
+      {/* Loading overlay */}
+      {loading && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
+          <div className="animate-pulse rounded-lg border border-fuchsia-600 bg-[#231133] px-8 py-6 text-xl font-semibold text-white shadow-lg">
+            Loading chart...
+          </div>
+        </div>
+      )}
       <div className="mb-6 flex items-center">
         {onBack && (
           <button
@@ -90,7 +100,10 @@ export default function PresetCharts({ onBack }: PresetChartsProps) {
           <button
             key={m.value}
             className={`cursor-pointer rounded-lg border border-fuchsia-600 px-4 py-2 font-semibold text-white transition ${selectedMetric === m.value ? 'bg-fuchsia-600' : 'bg-black hover:bg-fuchsia-700'}`}
-            onClick={() => setSelectedMetric(m.value)}
+            onClick={() => {
+              setLoading(true);
+              setSelectedMetric(m.value);
+            }}
           >
             {m.label}
           </button>
@@ -98,7 +111,10 @@ export default function PresetCharts({ onBack }: PresetChartsProps) {
         <select
           className="ml-4 cursor-pointer rounded-lg border border-fuchsia-600 bg-black px-4 py-2 text-white"
           value={selectedTimeFrame}
-          onChange={(e) => setSelectedTimeFrame(Number(e.target.value))}
+          onChange={(e) => {
+            setLoading(true);
+            setSelectedTimeFrame(Number(e.target.value));
+          }}
         >
           {TIME_FRAMES.map((tf) => (
             <option key={tf.value} value={tf.value}>
@@ -109,9 +125,10 @@ export default function PresetCharts({ onBack }: PresetChartsProps) {
         <select
           className="ml-4 cursor-pointer rounded-lg border border-fuchsia-600 bg-black px-4 py-2 text-white"
           value={selectedChartType}
-          onChange={(e) =>
-            setSelectedChartType(e.target.value as 'line' | 'bar')
-          }
+          onChange={(e) => {
+            setLoading(true);
+            setSelectedChartType(e.target.value as 'line' | 'bar');
+          }}
         >
           {CHART_TYPES.map((ct) => (
             <option key={ct.value} value={ct.value}>
@@ -122,7 +139,10 @@ export default function PresetCharts({ onBack }: PresetChartsProps) {
         <select
           className="ml-4 cursor-pointer rounded-lg border border-fuchsia-600 bg-black px-4 py-2 text-white"
           value={selectedInterval}
-          onChange={(e) => setSelectedInterval(e.target.value)}
+          onChange={(e) => {
+            setLoading(true);
+            setSelectedInterval(e.target.value);
+          }}
         >
           {INTERVALS.map((intv) => (
             <option key={intv.value} value={intv.value}>
@@ -139,6 +159,7 @@ export default function PresetCharts({ onBack }: PresetChartsProps) {
             startDate={startDate}
             endDate={endDate}
             interval={selectedInterval}
+            setLoading={setLoading}
           />
         ) : (
           <BarChart
@@ -147,6 +168,7 @@ export default function PresetCharts({ onBack }: PresetChartsProps) {
             startDate={startDate}
             endDate={endDate}
             interval={selectedInterval}
+            setLoading={setLoading}
           />
         )}
       </div>

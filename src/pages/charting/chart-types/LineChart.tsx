@@ -9,6 +9,7 @@ type LineChartProps = {
   startDate: string;
   endDate: string;
   interval?: string; // Add interval prop
+  setLoading?: (loading: boolean) => void;
 };
 
 const COLORS = d3.schemeCategory10;
@@ -30,18 +31,31 @@ function getQuarterLabel(dateStr: string) {
   return dateStr; // fallback: just return the string
 }
 
+function getXAxisLabel(dateStr: string, interval: string) {
+  if (interval === 'annual') {
+    // Just the year
+    return dateStr.slice(0, 4);
+  }
+  // Quarterly: show month and year
+  const date = new Date(dateStr);
+  if (!isNaN(date.getTime())) {
+    return date.toLocaleString('en-US', { month: 'short', year: 'numeric' });
+  }
+  return dateStr;
+}
+
 const LineChart = ({
   metric,
   tickers,
   startDate,
   endDate,
   interval = 'quarter', // Set default value for interval
+  setLoading,
 }: LineChartProps) => {
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!tickers.length) return;
-
     const fetchData = async () => {
       const promises = tickers.map(async (ticker) => {
         // Build endpoint, only add interval for metrics that support it
@@ -92,6 +106,7 @@ const LineChart = ({
       });
       const results = await Promise.all(promises);
       drawChart(results);
+      setLoading?.(false);
     };
 
     const drawChart = (
@@ -111,19 +126,19 @@ const LineChart = ({
         new Set(data.flatMap((d) => d.points.map((p) => p.date)))
       ).sort();
 
-      // Map each date to its quarter label
-      const dateToQuarter = Object.fromEntries(
-        allDates.map((d) => [d, getQuarterLabel(d)])
+      // Map each date to its x-axis label
+      const dateToLabel = Object.fromEntries(
+        allDates.map((d) => [d, getXAxisLabel(d, interval)])
       );
 
-      // Get unique quarters in order
-      const allQuarters = Array.from(
-        new Set(allDates.map((d) => dateToQuarter[d]))
+      // Get unique labels in order
+      const allLabels = Array.from(
+        new Set(allDates.map((d) => dateToLabel[d]))
       );
 
-      // For x scale, use allDates, but for ticks, use one date per quarter
-      const quarterFirstDates = allQuarters.map((q) =>
-        allDates.find((d) => dateToQuarter[d] === q)
+      // For x scale, use allDates, but for ticks, use one date per label
+      const labelFirstDates = allLabels.map((lbl) =>
+        allDates.find((d) => dateToLabel[d] === lbl)
       );
 
       // X scale (dates)
@@ -175,8 +190,8 @@ const LineChart = ({
         .call(
           d3
             .axisBottom(x)
-            .tickValues(quarterFirstDates as string[])
-            .tickFormat((d) => dateToQuarter[d as string])
+            .tickValues(labelFirstDates as string[])
+            .tickFormat((d) => dateToLabel[d as string])
         )
         .selectAll('text')
         .attr('fill', '#fff')
@@ -191,7 +206,7 @@ const LineChart = ({
         .attr('text-anchor', 'middle')
         .attr('fill', '#fff')
         .attr('font-size', 14)
-        .text('Quarter');
+        .text(interval === 'annual' ? 'Year' : 'Month');
 
       svg
         .append('text')
@@ -239,22 +254,22 @@ const LineChart = ({
           .append('circle')
           .attr('cx', (d) => x(d.date)!)
           .attr('cy', (d) => y(d.value))
-          .attr('r', 3)
+          .attr('r', 6)
           .attr('fill', COLORS[i % COLORS.length])
           .on('mouseover', function (event, d) {
             d3.select(ref.current)
               .select('.tooltip')
               .style('opacity', 1)
               .html(
-                `<strong>${series.ticker}</strong><br/>${getQuarterLabel(
-                  d.date
-                )}<br/>${metric}: ${d.value !== null && d.value !== undefined ? d.value.toFixed(2) : 'N/A'}`
+                `<strong>${series.ticker}</strong><br/>${getXAxisLabel(d.date, interval)}<br/>${metric}: ${d.value !== null && d.value !== undefined ? d.value.toFixed(2) : 'N/A'}`
               )
               .style('left', event.offsetX + 20 + 'px')
               .style('top', event.offsetY + 'px');
+            d3.select(this).attr('fill', '#f472b6');
           })
           .on('mouseout', function () {
             d3.select(ref.current).select('.tooltip').style('opacity', 0);
+            d3.select(this).attr('fill', COLORS[i % COLORS.length]);
           });
       });
 
@@ -299,7 +314,7 @@ const LineChart = ({
     };
 
     fetchData();
-  }, [tickers, startDate, endDate, metric]);
+  }, [tickers, startDate, endDate, metric, interval]);
 
   return <div ref={ref} />;
 };

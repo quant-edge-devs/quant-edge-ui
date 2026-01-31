@@ -14,23 +14,6 @@ type LineChartProps = {
 
 const COLORS = d3.schemeCategory10;
 
-function getQuarterLabel(dateStr: string) {
-  // Handle 'YYYY-QN' format
-  const match = dateStr.match(/^(\d{4})-Q(\d)$/);
-  if (match) {
-    return `Q${match[2]} ${match[1]}`;
-  }
-  // Fallback to standard date
-  const date = new Date(dateStr);
-  if (!isNaN(date.getTime())) {
-    const year = date.getFullYear();
-    const month = date.getMonth();
-    const quarter = Math.floor(month / 3) + 1;
-    return `Q${quarter} ${year}`;
-  }
-  return dateStr; // fallback: just return the string
-}
-
 function getXAxisLabel(dateStr: string, interval: string) {
   if (interval === 'annual') {
     // Just the year

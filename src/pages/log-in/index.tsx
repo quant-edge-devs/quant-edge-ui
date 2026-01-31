@@ -1,7 +1,6 @@
 import { Form, Formik } from 'formik';
 import { Button } from '@headlessui/react';
 import { useAuth } from '../../contexts/AuthContext';
-import { Link } from 'react-router';
 
 // SVG icons for Google and Apple
 const GoogleIcon = () => (
@@ -16,7 +15,7 @@ const GoogleIcon = () => (
 );
 
 export const Login = () => {
-  const { loginWithGoogle } = useAuth();
+  const { loginWithGoogle, logout, currentUser } = useAuth();
 
   return (
     <div className="flex justify-center bg-[#1a0820]">
@@ -24,30 +23,35 @@ export const Login = () => {
         <h2 className="text-silver-100 mb-8 text-center text-3xl font-bold text-white">
           Sign in to QuantEdge
         </h2>
-        <Formik initialValues={{}} onSubmit={() => {}}>
-          {() => (
-            <Form className="flex w-full flex-col gap-6">
-              <Button
-                type="button"
-                className="mb-4 flex w-full cursor-pointer items-center justify-center rounded-lg bg-gradient-to-r from-slate-200 to-slate-400 py-3 text-lg font-semibold text-[#1a0820] shadow transition hover:from-slate-300 hover:to-slate-500"
-                onClick={loginWithGoogle}
-              >
-                <GoogleIcon />
-                Sign in with Google
-              </Button>
-
-              <div className="text-silver-100 mt-8 text-center text-white">
-                Don't have an account?{' '}
-                <Link
-                  to="/sign-up"
-                  className="text-purple-300 underline transition hover:text-fuchsia-400"
+        {currentUser ? (
+          <div className="flex w-full flex-col items-center gap-6">
+            <div className="mb-4 text-lg font-semibold text-white">
+              Welcome, {currentUser.displayName || currentUser.email || 'User'}!
+            </div>
+            <Button
+              type="button"
+              className="flex w-full cursor-pointer items-center justify-center rounded-lg bg-gradient-to-r from-fuchsia-600 to-fuchsia-800 py-3 text-lg font-semibold text-white shadow transition hover:from-fuchsia-700 hover:to-fuchsia-900"
+              onClick={logout}
+            >
+              Sign out
+            </Button>
+          </div>
+        ) : (
+          <Formik initialValues={{}} onSubmit={() => {}}>
+            {() => (
+              <Form className="flex w-full flex-col gap-6">
+                <Button
+                  type="button"
+                  className="mb-4 flex w-full cursor-pointer items-center justify-center rounded-lg bg-gradient-to-r from-slate-200 to-slate-400 py-3 text-lg font-semibold text-[#1a0820] shadow transition hover:from-slate-300 hover:to-slate-500"
+                  onClick={loginWithGoogle}
                 >
-                  Create one
-                </Link>
-              </div>
-            </Form>
-          )}
-        </Formik>
+                  <GoogleIcon />
+                  Sign in with Google
+                </Button>
+              </Form>
+            )}
+          </Formik>
+        )}
       </div>
     </div>
   );

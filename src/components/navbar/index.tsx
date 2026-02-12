@@ -1,7 +1,7 @@
-import { DesktopNavbar } from './Desktop';
+import { HorizontalNavbar } from './Horizontal';
 import { MobileNavbar } from './Mobile';
 
-const links = [
+export const links = [
   { to: '/contact-us', label: 'Contact us' },
   { to: '/about', label: 'About' },
   { to: '/tutorial', label: 'Tutorial' },
@@ -10,15 +10,5 @@ const links = [
   { to: '/charting', label: 'Charting' },
 ];
 
-export const Navbar = () => {
-  return (
-    <>
-      <div className="lg:hidden">
-        <MobileNavbar links={links} />
-      </div>
-      <div className="hidden lg:block">
-        <DesktopNavbar links={links} />
-      </div>
-    </>
-  );
-};
+// No longer exporting a global Navbar. Use HorizontalNavbar or MobileNavbar directly where needed.
+export { HorizontalNavbar, MobileNavbar };

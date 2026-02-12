@@ -12,13 +12,11 @@ type StockInfo = {
 
 export const StartAnalyzing = () => {
   const [query, setQuery] = useState('');
-  const [results, setResults] = useState<{ ticker: string; name: string }[]>(
-    []
-  );
   const [selectedTicker, setSelectedTicker] = useState<string | null>(null);
   const [stockInfo, setStockInfo] = useState<StockInfo | null>(null);
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
+  // --- Old backend search implementation (commented out) ---
+  /*
   useEffect(() => {
     const fetchTickers = async () => {
       if (query.trim().length === 0) {
@@ -39,10 +37,10 @@ export const StartAnalyzing = () => {
         setResults([]);
       }
     };
-    const delayDebounce = setTimeout(fetchTickers, 200);
-
+    const delayDebounce = setTimeout(fetchTickers, 10);
     return () => clearTimeout(delayDebounce);
   }, [query]);
+  */
 
   // Fetch stock info when a ticker is selected
   useEffect(() => {
@@ -60,18 +58,21 @@ export const StartAnalyzing = () => {
     });
   }, [selectedTicker]);
 
-  const handleSelect = (ticker: string) => {
-    setSelectedTicker(ticker);
-    setQuery('');
-    setResults([]);
-    setIsDropdownOpen(false);
+  // New: handle ticker submit
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (query.trim()) {
+      setSelectedTicker(query.trim().toUpperCase());
+      setQuery('');
+    }
   };
 
   const handleClear = () => {
     setSelectedTicker(null);
     setStockInfo(null);
     setQuery('');
-    setResults([]);
+    // setResults([]);
+    // setIsDropdownOpen(false);
   };
 
   return (
@@ -83,35 +84,42 @@ export const StartAnalyzing = () => {
             Stock Information
           </h2>
 
-          {/* Search Input */}
-          <div className="relative mb-8">
+          {/* Ticker Input (no backend search) */}
+          <form onSubmit={handleSubmit} className="relative mb-8">
             <input
               type="text"
               value={query}
-              onChange={(e) => {
-                setQuery(e.target.value);
-                setIsDropdownOpen(true);
-              }}
-              placeholder="Search for a stock ticker..."
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Enter a stock ticker (e.g. AAPL)"
               className="w-full rounded border border-gray-300 px-4 py-2 text-white focus:ring-2 focus:ring-blue-500 focus:outline-none"
               disabled={!!selectedTicker}
             />
+            <button
+              type="submit"
+              className="absolute right-2 top-2 rounded bg-fuchsia-600 px-4 py-1 text-white hover:bg-fuchsia-700"
+              disabled={!!selectedTicker || !query.trim()}
+            >
+              Submit
+            </button>
+          </form>
 
-            {isDropdownOpen && results.length > 0 && (
-              <ul className="absolute z-50 mt-1 max-h-60 w-full overflow-y-auto rounded-lg border border-gray-200 bg-white shadow-lg">
-                {results.map((item, i) => (
-                  <li
-                    key={i}
-                    onClick={() => handleSelect(item.ticker)}
-                    className="flex cursor-pointer justify-between p-2 hover:bg-blue-50"
-                  >
-                    <span className="font-medium">{item.ticker}</span>
-                    <span className="text-sm text-gray-500">{item.name}</span>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
+          {/* --- Old dropdown UI (commented out) --- */}
+          {/*
+          {isDropdownOpen && results.length > 0 && (
+            <ul className="absolute z-50 mt-1 max-h-60 w-full overflow-y-auto rounded-lg border border-gray-200 bg-white shadow-lg">
+              {results.map((item, i) => (
+                <li
+                  key={i}
+                  onClick={() => handleSelect(item.ticker)}
+                  className="flex cursor-pointer justify-between p-2 hover:bg-blue-50"
+                >
+                  <span className="font-medium">{item.ticker}</span>
+                  <span className="text-sm text-gray-500">{item.name}</span>
+                </li>
+              ))}
+            </ul>
+          )}
+          */}
 
           {/* Stock Info Section */}
           {selectedTicker && stockInfo && (
@@ -140,7 +148,7 @@ export const StartAnalyzing = () => {
 
           {!selectedTicker && (
             <div className="mt-8 text-center text-purple-300">
-              Search for a stock ticker to view its information.
+              Enter a stock ticker to view its information.
             </div>
           )}
         </div>

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import LineChart from './chart-types/LineChart';
 import BarChart from './chart-types/BarChart';
+import AreaChart from './chart-types/AreaChart';
 
 interface PresetChartsProps {
   onBack?: () => void;
@@ -25,6 +26,7 @@ const TIME_FRAMES = [
 const CHART_TYPES = [
   { label: 'Line Chart', value: 'line' },
   { label: 'Bar Chart', value: 'bar' },
+  { label: 'Area Chart', value: 'area' },
 ];
 
 const INTERVALS = [
@@ -47,9 +49,9 @@ export default function PresetCharts({ onBack }: PresetChartsProps) {
   const [ticker, setTicker] = useState('AAPL');
   const [input, setInput] = useState('AAPL');
   const [selectedTimeFrame, setSelectedTimeFrame] = useState(1);
-  const [selectedChartType, setSelectedChartType] = useState<'line' | 'bar'>(
-    'line'
-  );
+  const [selectedChartType, setSelectedChartType] = useState<
+    'line' | 'bar' | 'area'
+  >('line');
   const [selectedInterval, setSelectedInterval] = useState('quarter');
   const [loading, setLoading] = useState(false);
   const { startDate, endDate } = getDates(selectedTimeFrame);
@@ -61,7 +63,7 @@ export default function PresetCharts({ onBack }: PresetChartsProps) {
   };
 
   return (
-    <div className="min-h-screen bg-[#181425] p-4">
+    <div className="flex h-full min-h-0 flex-col p-4">
       {/* Loading overlay */}
       {loading && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
@@ -70,17 +72,7 @@ export default function PresetCharts({ onBack }: PresetChartsProps) {
           </div>
         </div>
       )}
-      <div className="mb-6 flex items-center">
-        {onBack && (
-          <button
-            className="mr-4 rounded-lg border border-fuchsia-600 bg-black px-4 py-2 font-semibold text-white hover:bg-fuchsia-700"
-            onClick={onBack}
-          >
-            ← Back to Dashboard
-          </button>
-        )}
-        <h1 className="text-2xl font-bold text-white">Preset Charts</h1>
-      </div>
+      {/* Search and controls */}
       <form onSubmit={handleSearch} className="mb-6 flex max-w-xl gap-2">
         <input
           className="flex-1 rounded-lg border border-fuchsia-600 bg-black px-4 py-2 text-white focus:outline-none"
@@ -95,11 +87,15 @@ export default function PresetCharts({ onBack }: PresetChartsProps) {
           Search
         </button>
       </form>
-      <div className="mb-4 flex items-center gap-2">
+      <div className="mb-4 flex flex-wrap items-center gap-2">
         {METRICS.map((m) => (
           <button
             key={m.value}
-            className={`cursor-pointer rounded-lg border border-fuchsia-600 px-4 py-2 font-semibold text-white transition ${selectedMetric === m.value ? 'bg-fuchsia-600' : 'bg-black hover:bg-fuchsia-700'}`}
+            className={`cursor-pointer rounded-lg border border-fuchsia-600 px-4 py-2 font-semibold text-white transition ${
+              selectedMetric === m.value
+                ? 'bg-fuchsia-600'
+                : 'bg-black hover:bg-fuchsia-700'
+            }`}
             onClick={() => {
               setLoading(true);
               setSelectedMetric(m.value);
@@ -127,7 +123,7 @@ export default function PresetCharts({ onBack }: PresetChartsProps) {
           value={selectedChartType}
           onChange={(e) => {
             setLoading(true);
-            setSelectedChartType(e.target.value as 'line' | 'bar');
+            setSelectedChartType(e.target.value as 'line' | 'bar' | 'area');
           }}
         >
           {CHART_TYPES.map((ct) => (
@@ -151,26 +147,38 @@ export default function PresetCharts({ onBack }: PresetChartsProps) {
           ))}
         </select>
       </div>
-      <div className="rounded-lg border border-fuchsia-600 bg-black p-4">
-        {selectedChartType === 'line' ? (
-          <LineChart
-            tickers={[ticker]}
-            metric={selectedMetric}
-            startDate={startDate}
-            endDate={endDate}
-            interval={selectedInterval}
-            setLoading={setLoading}
-          />
-        ) : (
-          <BarChart
-            tickers={[ticker]}
-            metric={selectedMetric}
-            startDate={startDate}
-            endDate={endDate}
-            interval={selectedInterval}
-            setLoading={setLoading}
-          />
-        )}
+      {/* Chart area fills remaining space, never overflows, with bottom padding if needed */}
+      <div className="flex min-h-0 flex-1 flex-col">
+        <div className="relative flex h-full w-full min-w-0 flex-1 flex-col overflow-hidden rounded-2xl border-2 border-fuchsia-700/40 bg-[#181425] p-4 shadow-lg">
+          {selectedChartType === 'line' ? (
+            <LineChart
+              tickers={[ticker]}
+              metric={selectedMetric}
+              startDate={startDate}
+              endDate={endDate}
+              interval={selectedInterval}
+              setLoading={setLoading}
+            />
+          ) : selectedChartType === 'bar' ? (
+            <BarChart
+              tickers={[ticker]}
+              metric={selectedMetric}
+              startDate={startDate}
+              endDate={endDate}
+              interval={selectedInterval}
+              setLoading={setLoading}
+            />
+          ) : (
+            <AreaChart
+              tickers={[ticker]}
+              metric={selectedMetric}
+              startDate={startDate}
+              endDate={endDate}
+              interval={selectedInterval}
+              setLoading={setLoading}
+            />
+          )}
+        </div>
       </div>
     </div>
   );

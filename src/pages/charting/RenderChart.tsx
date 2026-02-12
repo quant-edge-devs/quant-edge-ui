@@ -4,6 +4,7 @@ import LineChart from './chart-types/LineChart';
 type ChartProps = {
   tickers: string[];
   metric: string;
+  secondaryMetric?: string;
   startDate: string;
   endDate: string;
   chartType: string;
@@ -19,9 +20,23 @@ const Chart = ({ chartType, ...props }: ChartProps) => {
   }
   switch (chartType) {
     case 'Bar Chart':
-      return <BarChart {...props} />;
+      return (
+        <BarChart
+          {...props}
+          {...(props.secondaryMetric
+            ? { secondaryMetric: props.secondaryMetric }
+            : {})}
+        />
+      );
     case 'Line Chart':
-      return <LineChart {...props} />;
+      return (
+        <LineChart
+          {...props}
+          {...(props.secondaryMetric
+            ? { secondaryMetric: props.secondaryMetric }
+            : {})}
+        />
+      );
     default:
       return (
         <div className="flex h-full items-center justify-center text-sm text-purple-400">

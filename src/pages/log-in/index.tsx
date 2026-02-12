@@ -1,8 +1,8 @@
-import { Form, Formik } from 'formik';
+import { Form, Field, Formik } from 'formik';
 import { Button } from '@headlessui/react';
 import { useAuth } from '../../contexts/AuthContext';
+import { Link } from 'react-router-dom';
 
-// SVG icons for Google and Apple
 const GoogleIcon = () => (
   <svg className="mr-2 h-6 w-6" viewBox="0 0 24 24">
     <g>
@@ -18,11 +18,31 @@ export const Login = () => {
   const { loginWithGoogle, logout, currentUser } = useAuth();
 
   return (
-    <div className="flex justify-center bg-[#1a0820]">
-      <div className="mt-16 flex w-full max-w-md flex-col items-center rounded-2xl bg-[#231133] p-8 shadow-xl">
-        <h2 className="text-silver-100 mb-8 text-center text-3xl font-bold text-white">
-          Sign in to QuantEdge
-        </h2>
+    <div className="flex min-h-screen">
+      {/* Left: Sign in form */}
+      <div className="flex w-full flex-col justify-center bg-[#0e1020] px-12 py-16 text-white md:w-1/2">
+        <Link
+          to="/"
+          className="mb-8 flex items-center gap-3 text-2xl font-bold"
+        >
+          <span className="rounded-xl bg-fuchsia-700/80 p-3">
+            {/* Placeholder for logo icon */}
+            <svg width="32" height="32" fill="none" viewBox="0 0 32 32">
+              <rect width="32" height="32" rx="12" fill="#a21caf" />
+              <path
+                d="M10 22V12M16 22V16M22 22V10"
+                stroke="#fff"
+                strokeWidth="2"
+                strokeLinecap="round"
+              />
+            </svg>
+          </span>
+          QuantEdge
+        </Link>
+        <h2 className="mb-2 text-3xl font-bold">Welcome back</h2>
+        <p className="mb-8 text-lg text-slate-300">
+          Sign in to access your analytics dashboard
+        </p>
         {currentUser ? (
           <div className="flex w-full flex-col items-center gap-6">
             <div className="mb-4 text-lg font-semibold text-white">
@@ -37,21 +57,105 @@ export const Login = () => {
             </Button>
           </div>
         ) : (
-          <Formik initialValues={{}} onSubmit={() => {}}>
+          <Formik
+            initialValues={{ email: '', password: '', remember: false }}
+            onSubmit={() => {}}
+          >
             {() => (
-              <Form className="flex w-full flex-col gap-6">
+              <Form className="flex w-full flex-col gap-4">
+                <label className="text-sm font-semibold" htmlFor="email">
+                  Email
+                </label>
+                <Field
+                  id="email"
+                  name="email"
+                  type="email"
+                  placeholder="you@example.com"
+                  className="mb-2 w-full rounded-lg border border-slate-700 bg-[#181a2a] px-4 py-3 text-white focus:outline-none"
+                />
+                <label className="text-sm font-semibold" htmlFor="password">
+                  Password
+                </label>
+                <div className="relative mb-2">
+                  <Field
+                    id="password"
+                    name="password"
+                    type="password"
+                    placeholder="••••••••"
+                    className="w-full rounded-lg border border-slate-700 bg-[#181a2a] px-4 py-3 text-white focus:outline-none"
+                  />
+                  {/* Eye icon for show/hide password could go here */}
+                </div>
+                <div className="mb-2 flex items-center justify-between">
+                  <label className="flex items-center gap-2 text-sm">
+                    <Field
+                      type="checkbox"
+                      name="remember"
+                      className="accent-fuchsia-600"
+                    />
+                    Remember me
+                  </label>
+                  <Link
+                    to="/auth/recover"
+                    className="text-sm text-fuchsia-400 hover:underline"
+                  >
+                    Forgot password?
+                  </Link>
+                </div>
                 <Button
-                  type="button"
-                  className="mb-4 flex w-full cursor-pointer items-center justify-center rounded-lg bg-gradient-to-r from-slate-200 to-slate-400 py-3 text-lg font-semibold text-[#1a0820] shadow transition hover:from-slate-300 hover:to-slate-500"
-                  onClick={loginWithGoogle}
+                  type="submit"
+                  className="mt-2 mb-2 flex w-full cursor-pointer items-center justify-center rounded-lg bg-fuchsia-600 py-3 text-lg font-semibold text-white shadow transition hover:bg-fuchsia-700"
                 >
-                  <GoogleIcon />
-                  Sign in with Google
+                  Sign In
                 </Button>
+                <div className="my-2 flex items-center justify-center gap-2 text-slate-400">
+                  <span className="h-px w-16 bg-slate-700" />
+                  <span className="text-sm">or continue with</span>
+                  <span className="h-px w-16 bg-slate-700" />
+                </div>
+                <div className="flex items-center justify-center">
+                  <Button
+                    type="button"
+                    className="flex w-1/2 items-center justify-center rounded-lg border border-slate-600 bg-[#181a2a] py-3 text-white hover:bg-[#231133]"
+                    onClick={loginWithGoogle}
+                  >
+                    <GoogleIcon /> Google
+                  </Button>
+                </div>
+                <div className="mt-6 text-center text-sm text-slate-400">
+                  Don't have an account?{' '}
+                  <Link
+                    to="/auth/sign-up"
+                    className="text-fuchsia-400 hover:underline"
+                  >
+                    Sign up
+                  </Link>
+                </div>
               </Form>
             )}
           </Formik>
         )}
+      </div>
+      {/* Right: Marketing panel */}
+      <div className="hidden w-1/2 flex-col items-center justify-center bg-gradient-to-br from-[#6d28d9] to-[#a21caf] p-16 text-white md:flex">
+        <div className="flex flex-col items-center justify-center">
+          <span className="mb-8 rounded-2xl bg-fuchsia-700/80 p-8">
+            <svg width="64" height="64" fill="none" viewBox="0 0 32 32">
+              <rect width="32" height="32" rx="12" fill="#a21caf" />
+              <path
+                d="M10 22V12M16 22V16M22 22V10"
+                stroke="#fff"
+                strokeWidth="2"
+                strokeLinecap="round"
+              />
+            </svg>
+          </span>
+          <h2 className="mb-4 text-3xl font-bold">Start analyzing today</h2>
+          <p className="max-w-xs text-center text-lg text-slate-200">
+            Access powerful financial analytics tools used by institutional
+            investors worldwide.
+          </p>
+        </div>
       </div>
     </div>
   );

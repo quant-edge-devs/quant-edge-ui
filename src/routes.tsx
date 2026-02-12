@@ -11,6 +11,8 @@ import { Tutorial } from './pages/tutorial';
 import { StartAnalyzing } from './pages/start-analyzing';
 import { Auth } from './pages/auth';
 import { Charting } from './pages/charting';
+import SelectDashboardTypePage from './pages/charting/welcome-modal/SelectDashboardTypePage';
+import PresetCharts from './pages/charting/PresetCharts';
 
 export const routes: RouteObject[] = [
   {
@@ -20,7 +22,9 @@ export const routes: RouteObject[] = [
       { path: 'about', element: <About /> },
       { path: 'contact-us', element: <ContactUs /> },
       { path: 'pricing', element: <Pricing /> },
-      { path: 'charting', element: <Charting /> },
+      { path: 'charting', element: <SelectDashboardTypePage /> },
+      { path: '/charting/preset', element: <PresetCharts /> },
+      { path: '/charting/custom', element: <Charting /> },
 
       {
         path: 'auth',

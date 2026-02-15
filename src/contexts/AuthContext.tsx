@@ -18,6 +18,7 @@ type AuthContextType = {
   logout: () => Promise<void>;
   resetPassword: (email: string) => Promise<void>;
   loginWithGoogle: () => Promise<UserCredential>;
+  signOut: () => Promise<void>; // Add signOut to context
 };
 const initialState: AuthContextType = {
   currentUser: null,
@@ -35,6 +36,9 @@ const initialState: AuthContextType = {
   },
   loginWithGoogle: async () => {
     throw new Error('loginWithGoogle function not initialized');
+  },
+  signOut: async () => {
+    throw new Error('signOut function not initialized');
   },
 };
 
@@ -57,6 +61,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     signInWithEmailAndPassword(auth, email, password);
 
   const logout = () => signOut(auth);
+  const signOutFunc = logout; // Alias for signOut
 
   const resetPassword = (email: string) => sendPasswordResetEmail(auth, email);
 
@@ -80,6 +85,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     logout,
     resetPassword,
     loginWithGoogle,
+    signOut: signOutFunc, // Add signOut to context value
   };
 
   return (

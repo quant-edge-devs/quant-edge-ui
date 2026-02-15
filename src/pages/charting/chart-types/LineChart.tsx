@@ -11,9 +11,23 @@ type LineChartProps = {
   endDate: string;
   interval?: string; // Add interval prop
   setLoading?: (loading: boolean) => void;
+  containerWidth?: string | number;
+  containerHeight?: string | number;
 };
 
-const COLORS = d3.schemeCategory10;
+// Replace d3.schemeCategory10 with new purple/dark theme colors
+const COLORS = [
+  '#a78bfa', // Light purple
+  '#7c3aed', // Vivid purple
+  '#6d28d9', // Deep purple
+  '#c084fc', // Soft purple
+  '#f472b6', // Pink accent
+  '#818cf8', // Indigo
+  '#312e81', // Dark indigo
+  '#f3e8ff', // Pale purple
+  '#ede9fe', // Lavender
+  '#581c87', // Rich purple
+];
 const GRADIENT_ID = 'line-gradient';
 const SHADOW_ID = 'line-shadow';
 
@@ -38,12 +52,11 @@ const LineChart = ({
   endDate,
   interval = 'quarter', // Set default value for interval
   setLoading,
+  containerWidth = '100%',
+  containerHeight = '100%',
 }: LineChartProps) => {
   const ref = useRef<HTMLDivElement>(null);
-  const [windowSize, setWindowSize] = useState({
-    width: window.innerWidth,
-    height: window.innerHeight,
-  });
+  const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
   // Fix: store tickers as a string in the cache
   const lastFetchParams = useRef({
     tickers: '',
@@ -54,12 +67,23 @@ const LineChart = ({
     interval: '',
   });
 
+  // Use ResizeObserver for true dynamic resizing
   useEffect(() => {
-    const handleResize = () => {
-      setWindowSize({ width: window.innerWidth, height: window.innerHeight });
-    };
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
+    const container = ref.current;
+    if (!container) return;
+    const observer = new window.ResizeObserver((entries) => {
+      for (let entry of entries) {
+        const { width, height } = entry.contentRect;
+        setDimensions({ width, height });
+      }
+    });
+    observer.observe(container);
+    // Set initial size
+    setDimensions({
+      width: container.offsetWidth,
+      height: container.offsetHeight,
+    });
+    return () => observer.disconnect();
   }, []);
 
   useEffect(() => {
@@ -162,10 +186,18 @@ const LineChart = ({
       d3.select(ref.current).selectAll('*').remove();
       const container = ref.current;
       // Chart sizing and margins (match BarChart)
-      const pageWidth = windowSize.width;
-      const pageHeight = windowSize.height;
-      const width = Math.floor(pageWidth * 0.8);
-      const height = Math.floor(pageHeight * 0.8);
+      // Use container size if available, else fallback to window size
+      const parent = ref.current?.parentElement;
+      const pageWidth = parent?.offsetWidth || dimensions.width;
+      const pageHeight = parent?.offsetHeight || dimensions.height;
+      const width =
+        typeof containerWidth === 'number'
+          ? containerWidth
+          : parent?.offsetWidth || dimensions.width * 0.8;
+      const height =
+        typeof containerHeight === 'number'
+          ? containerHeight
+          : parent?.offsetHeight || dimensions.height * 0.8;
       const margin = {
         top: 40,
         right: 320,
@@ -278,10 +310,11 @@ const LineChart = ({
         .attr('height', height)
         .attr(
           'style',
-          'border-radius: 24px; background: #231133; box-shadow: 0 4px 24px #00000033;'
+          // Use the requested background color
+          'border-radius: 24px; background: #181a2a; box-shadow: 0 4px 24px #a78bfa33, 0 1.5px 8px #00000033;'
         );
 
-      // Gradient fill
+      // Gradient fill (update to purple gradient)
       svg
         .append('defs')
         .append('linearGradient')
@@ -293,7 +326,7 @@ const LineChart = ({
         .selectAll('stop')
         .data([
           { offset: '0%', color: '#a78bfa', opacity: 0.4 },
-          { offset: '100%', color: '#a78bfa', opacity: 0 },
+          { offset: '100%', color: '#7c3aed', opacity: 0 },
         ])
         .enter()
         .append('stop')
@@ -301,9 +334,9 @@ const LineChart = ({
         .attr('stop-color', (d) => d.color)
         .attr('stop-opacity', (d) => d.opacity);
 
-      // Drop shadow filter
+      // Drop shadow filter (update to purple shadow)
       svg.append('defs').append('filter').attr('id', SHADOW_ID).html(`
-          <feDropShadow dx="0" dy="4" stdDeviation="4" flood-color="#a78bfa" flood-opacity="0.3" />
+          <feDropShadow dx="0" dy="4" stdDeviation="4" flood-color="#a78bfa" flood-opacity="0.35" />
         `);
 
       // Y-axis number formatter
@@ -324,14 +357,14 @@ const LineChart = ({
         .attr('transform', `translate(${margin.left},0)`)
         .call(d3.axisLeft(y).tickFormat(formatAbbrev))
         .selectAll('text')
-        .attr('fill', '#fff');
+        .attr('fill', '#ede9fe');
       if (normalizedSecondary.length && y2) {
         svg
           .append('g')
           .attr('transform', `translate(${width - margin.right},0)`)
           .call(d3.axisRight(y2).tickFormat(formatAbbrev))
           .selectAll('text')
-          .attr('fill', '#fff');
+          .attr('fill', '#ede9fe');
       }
       svg
         .append('g')
@@ -343,7 +376,7 @@ const LineChart = ({
             .tickFormat((d) => dateToLabel[d as string])
         )
         .selectAll('text')
-        .attr('fill', '#fff')
+        .attr('fill', '#ede9fe')
         .attr('transform', 'rotate(-30)')
         .style('text-anchor', 'end');
 
@@ -353,7 +386,7 @@ const LineChart = ({
         .attr('x', width / 2)
         .attr('y', height - 15)
         .attr('text-anchor', 'middle')
-        .attr('fill', '#fff')
+        .attr('fill', '#ede9fe')
         .attr('font-size', 14)
         .text(interval === 'annual' ? 'Year' : 'Month');
       svg
@@ -362,7 +395,7 @@ const LineChart = ({
         .attr('x', -height / 2)
         .attr('y', 20)
         .attr('text-anchor', 'middle')
-        .attr('fill', '#fff')
+        .attr('fill', '#ede9fe')
         .attr('font-size', 14)
         .text(metric);
       if (secondaryData.length && secondaryMetric && y2) {
@@ -372,22 +405,26 @@ const LineChart = ({
           .attr('x', -height / 2)
           .attr('y', width - margin.right + 40)
           .attr('text-anchor', 'middle')
-          .attr('fill', '#fff')
+          .attr('fill', '#ede9fe')
           .attr('font-size', 14)
           .text(secondaryMetric);
       }
 
-      // Tooltip div
+      // Tooltip (update to purple/dark theme)
       d3.select(ref.current)
         .append('div')
         .attr('class', 'tooltip')
         .style('position', 'absolute')
-        .style('background', '#222')
-        .style('color', '#fff')
-        .style('padding', '6px 12px')
-        .style('border-radius', '6px')
+        .style(
+          'background',
+          'linear-gradient(135deg, #231133 60%, #3b0764 100%)'
+        )
+        .style('color', '#f3e8ff')
+        .style('padding', '8px 16px')
+        .style('border-radius', '8px')
         .style('pointer-events', 'none')
-        .style('font-size', '13px')
+        .style('font-size', '14px')
+        .style('box-shadow', '0 2px 8px #a78bfa55')
         .style('opacity', 0);
 
       // Line generator (rounded ends)
@@ -447,7 +484,7 @@ const LineChart = ({
               .select('.tooltip')
               .style('opacity', 1)
               .html(
-                `<strong>${series.ticker}</strong><br/>${dateToLabel[getDateKey(d.date, interval)]}<br/>${metric}: ${d.value !== null && d.value !== undefined ? d.value.toFixed(2) : 'N/A'}`
+                `<strong style=\"color:#a78bfa\">${series.ticker}</strong><br/><span style=\"color:#ede9fe\">${dateToLabel[getDateKey(d.date, interval)]}</span><br/><span style=\"color:#f472b6\">${metric}: ${d.value !== null && d.value !== undefined ? d.value.toFixed(2) : 'N/A'}</span>`
               )
               .style('left', event.offsetX + 20 + 'px')
               .style('top', event.offsetY + 'px');
@@ -502,7 +539,7 @@ const LineChart = ({
             });
         });
       }
-      // Draw zero line if zero is within the domain
+      // Draw zero line for clarity (make purple)
       if (yMin < 0 || yMax > 0) {
         svg
           .append('line')
@@ -510,8 +547,8 @@ const LineChart = ({
           .attr('x2', width - margin.right)
           .attr('y1', y(0))
           .attr('y2', y(0))
-          .attr('stroke', '#888')
-          .attr('stroke-width', 1)
+          .attr('stroke', '#a78bfa')
+          .attr('stroke-width', 1.5)
           .attr('stroke-dasharray', '4,2');
       }
       // Legend
@@ -533,7 +570,7 @@ const LineChart = ({
           .append('text')
           .attr('x', 26)
           .attr('y', i * 24 + 14)
-          .attr('fill', '#fff')
+          .attr('fill', '#ede9fe')
           .attr('font-size', 14)
           .text(`${series.ticker} (${metric})`);
       });
@@ -557,7 +594,7 @@ const LineChart = ({
             .append('text')
             .attr('x', 26)
             .attr('y', (primaryData.length + i) * 24 + 14)
-            .attr('fill', '#fff')
+            .attr('fill', '#ede9fe')
             .attr('font-size', 14)
             .text(`${series.ticker} (${secondaryMetric})`);
         });
@@ -565,16 +602,32 @@ const LineChart = ({
     };
     fetchData();
   }, [
-    tickers.join(','),
-    startDate,
-    endDate,
+    tickers && tickers.join(','),
     metric,
     secondaryMetric,
+    startDate,
+    endDate,
     interval,
-    windowSize.width,
-    windowSize.height,
+    dimensions.width,
+    dimensions.height,
+    containerWidth,
+    containerHeight,
   ]);
-  return <div ref={ref} />;
+  return (
+    <div
+      ref={ref}
+      style={{
+        width: containerWidth,
+        height: containerHeight,
+        minHeight: 320,
+        minWidth: 0,
+        position: 'relative',
+      }}
+      className="line-chart-container"
+    >
+      {/* Chart will be rendered here by D3 using dimensions */}
+    </div>
+  );
 };
 
 export default LineChart;

@@ -25,7 +25,7 @@ export const Login = () => {
           to="/"
           className="mb-8 flex items-center gap-3 text-2xl font-bold"
         >
-          <span className="rounded-xl bg-fuchsia-700/80 p-3">
+          <span className="rounded-xl bg-[#0a0a8b] p-3">
             {/* Placeholder for logo icon */}
             <svg width="32" height="32" fill="none" viewBox="0 0 32 32">
               <rect width="32" height="32" rx="12" fill="#a21caf" />
@@ -104,7 +104,7 @@ export const Login = () => {
                 </div>
                 <Button
                   type="submit"
-                  className="mt-2 mb-2 flex w-full cursor-pointer items-center justify-center rounded-lg bg-fuchsia-600 py-3 text-lg font-semibold text-white shadow transition hover:bg-fuchsia-700"
+                  className="mt-2 mb-2 flex w-full cursor-pointer items-center justify-center rounded-lg bg-[#0a0a8b] py-3 text-lg font-semibold text-white shadow transition hover:bg-[#353967]"
                 >
                   Sign In
                 </Button>

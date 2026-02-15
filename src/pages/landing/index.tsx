@@ -4,7 +4,7 @@ import { useAuth } from '../../contexts/AuthContext';
 
 export const Landing = () => {
   const navigate = useNavigate();
-  const { currentUser } = useAuth();
+  const { currentUser, signOut } = useAuth();
 
   return (
     <div className="min-h-screen w-full bg-[radial-gradient(ellipse_at_center,_#1E1B4B_30%,_#0F172A_100%)]">
@@ -33,6 +33,14 @@ export const Landing = () => {
             >
               Sign In
             </Link>
+          )}
+          {currentUser && (
+            <button
+              onClick={signOut}
+              className="text-lg font-medium text-white transition hover:text-fuchsia-400"
+            >
+              Sign Out
+            </button>
           )}
           <Link
             to="/charting"

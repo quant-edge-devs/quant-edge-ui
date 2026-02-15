@@ -10,9 +10,9 @@ import { Pricing } from './pages/pricing';
 import { Tutorial } from './pages/tutorial';
 import { StartAnalyzing } from './pages/start-analyzing';
 import { Auth } from './pages/auth';
-import { Charting } from './pages/charting';
+import { PresetChartsPage } from './pages/charting/PresetChartsPage';
 import SelectDashboardTypePage from './pages/charting/welcome-modal/SelectDashboardTypePage';
-import PresetCharts from './pages/charting/PresetCharts';
+import CustomChartsPage from './pages/charting/CustomChartsPage';
 
 export const routes: RouteObject[] = [
   {
@@ -23,8 +23,8 @@ export const routes: RouteObject[] = [
       { path: 'contact-us', element: <ContactUs /> },
       { path: 'pricing', element: <Pricing /> },
       { path: 'charting', element: <SelectDashboardTypePage /> },
-      { path: '/charting/preset', element: <PresetCharts /> },
-      { path: '/charting/custom', element: <Charting /> },
+      { path: 'charting/preset', element: <PresetChartsPage /> },
+      { path: 'charting/custom', element: <CustomChartsPage /> },
 
       {
         path: 'auth',

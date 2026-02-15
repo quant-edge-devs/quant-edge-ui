@@ -11,9 +11,23 @@ type BarChartProps = {
   endDate: string;
   interval?: string; // Add interval prop
   setLoading?: (loading: boolean) => void;
+  containerWidth?: string | number;
+  containerHeight?: string | number;
 };
 
-const COLORS = d3.schemeCategory10;
+// Replace d3.schemeCategory10 with new purple/dark theme colors
+const COLORS = [
+  '#a78bfa', // Light purple
+  '#7c3aed', // Vivid purple
+  '#6d28d9', // Deep purple
+  '#c084fc', // Soft purple
+  '#f472b6', // Pink accent
+  '#818cf8', // Indigo
+  '#312e81', // Dark indigo
+  '#f3e8ff', // Pale purple
+  '#ede9fe', // Lavender
+  '#581c87', // Rich purple
+];
 
 function getXAxisLabel(dateStr: string, interval: string) {
   if (interval === 'annual') {
@@ -36,12 +50,11 @@ const BarChart = ({
   endDate,
   interval = 'quarter',
   setLoading,
+  containerWidth = '100%',
+  containerHeight = '100%',
 }: BarChartProps) => {
   const ref = useRef<HTMLDivElement>(null);
-  const [windowSize, setWindowSize] = useState({
-    width: window.innerWidth,
-    height: window.innerHeight,
-  });
+  const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
   const lastFetchParams = useRef({
     tickers: '',
     metric: '',
@@ -51,15 +64,29 @@ const BarChart = ({
     interval: '',
   });
 
+  // Use ResizeObserver for true dynamic resizing
   useEffect(() => {
-    const handleResize = () => {
-      setWindowSize({ width: window.innerWidth, height: window.innerHeight });
-    };
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
+    const container = ref.current;
+    if (!container) return;
+    const observer = new window.ResizeObserver((entries) => {
+      for (let entry of entries) {
+        const { width, height } = entry.contentRect;
+        setDimensions({ width, height });
+      }
+    });
+    observer.observe(container);
+    // Set initial size
+    setDimensions({
+      width: container.offsetWidth,
+      height: container.offsetHeight,
+    });
+    return () => observer.disconnect();
   }, []);
 
   useEffect(() => {
+    // Clear chart container before drawing
+    d3.select(ref.current).selectAll('*').remove();
+
     const paramsString = JSON.stringify({
       tickers: JSON.stringify(tickers),
       metric,
@@ -162,10 +189,18 @@ const BarChart = ({
       // --- END DEBUG LOGS ---
 
       // Chart sizing and margins
-      const pageWidth = windowSize.width;
-      const pageHeight = windowSize.height;
-      const width = Math.floor(pageWidth * 0.85); // Shrink SVG width for legend
-      const height = Math.floor(pageHeight * 0.8);
+      // Use container size if available, else fallback to window size
+      const parent = ref.current?.parentElement;
+      const pageWidth = parent?.offsetWidth || dimensions.width;
+      const pageHeight = parent?.offsetHeight || dimensions.height;
+      const width =
+        typeof containerWidth === 'number'
+          ? containerWidth
+          : parent?.offsetWidth || dimensions.width * 0.85;
+      const height =
+        typeof containerHeight === 'number'
+          ? containerHeight
+          : parent?.offsetHeight || dimensions.height * 0.8;
       const margin = {
         top: 60,
         right: 320, // Increased space for legend and right axis
@@ -303,10 +338,11 @@ const BarChart = ({
         .attr('height', height)
         .attr(
           'style',
-          'border-radius: 24px; background: #231133; box-shadow: 0 4px 24px #00000033;'
+          // Use the requested background color
+          'border-radius: 24px; background: #181a2a; box-shadow: 0 4px 24px #a78bfa33, 0 1.5px 8px #00000033;'
         );
 
-      // Gradient fill for bars
+      // Gradient fill for bars (update to purple gradient)
       svg
         .append('defs')
         .append('linearGradient')
@@ -317,8 +353,8 @@ const BarChart = ({
         .attr('y2', '100%')
         .selectAll('stop')
         .data([
-          { offset: '0%', color: '#a78bfa', opacity: 0.8 },
-          { offset: '100%', color: '#a78bfa', opacity: 0.3 },
+          { offset: '0%', color: '#a78bfa', opacity: 0.95 },
+          { offset: '100%', color: '#7c3aed', opacity: 0.65 },
         ])
         .enter()
         .append('stop')
@@ -326,12 +362,12 @@ const BarChart = ({
         .attr('stop-color', (d) => d.color)
         .attr('stop-opacity', (d) => d.opacity);
 
-      // Drop shadow filter for bars
+      // Drop shadow filter for bars (update to purple shadow)
       svg.append('defs').append('filter').attr('id', BAR_SHADOW_ID).html(`
-          <feDropShadow dx="0" dy="4" stdDeviation="4" flood-color="#a78bfa" flood-opacity="0.3" />
+          <feDropShadow dx="0" dy="4" stdDeviation="4" flood-color="#a78bfa" flood-opacity="0.45" />
         `);
 
-      // Grid lines
+      // Grid lines (make more subtle, purple-tinted)
       svg
         .append('g')
         .attr('class', 'grid-y')
@@ -343,8 +379,8 @@ const BarChart = ({
         .attr('x2', width - margin.right)
         .attr('y1', (d) => y(d))
         .attr('y2', (d) => y(d))
-        .attr('stroke', '#fff')
-        .attr('stroke-opacity', 0.12)
+        .attr('stroke', '#a78bfa')
+        .attr('stroke-opacity', 0.1)
         .attr('stroke-dasharray', '6,4');
 
       // Axes
@@ -376,18 +412,22 @@ const BarChart = ({
         .attr('transform', 'rotate(-30)')
         .style('text-anchor', 'end');
 
-      // Tooltip
+      // Tooltip (update to purple/dark theme)
       const tooltip = d3
         .select(ref.current)
         .append('div')
         .attr('class', 'tooltip')
         .style('position', 'absolute')
-        .style('background', '#222')
-        .style('color', '#fff')
-        .style('padding', '6px 12px')
-        .style('border-radius', '6px')
+        .style(
+          'background',
+          'linear-gradient(135deg, #231133 60%, #3b0764 100%)'
+        )
+        .style('color', '#f3e8ff')
+        .style('padding', '8px 16px')
+        .style('border-radius', '8px')
         .style('pointer-events', 'none')
-        .style('font-size', '13px')
+        .style('font-size', '14px')
+        .style('box-shadow', '0 2px 8px #a78bfa55')
         .style('opacity', 0);
 
       // Draw bars for primary metric (solid, rounded, gradient, shadow)
@@ -433,7 +473,7 @@ const BarChart = ({
           tooltip
             .style('opacity', 1)
             .html(
-              `<strong>${d.ticker}</strong><br/>${dateToLabel[d.date]}<br/>${metric}: ${d.value !== null && d.value !== undefined ? formatAbbrev(d.value) : 'N/A'}`
+              `<strong style=\"color:#a78bfa\">${d.ticker}</strong><br/><span style=\"color:#ede9fe\">${dateToLabel[d.date]}</span><br/><span style=\"color:#f472b6\">${metric}: ${d.value !== null && d.value !== undefined ? formatAbbrev(d.value) : 'N/A'}</span>`
             )
             .style('left', event.offsetX + 20 + 'px')
             .style('top', event.offsetY + 'px');
@@ -514,15 +554,15 @@ const BarChart = ({
             d3.select(this).attr('fill', d.color);
           });
       }
-      // Draw zero line for clarity
+      // Draw zero line for clarity (make purple)
       svg
         .append('line')
         .attr('x1', margin.left)
         .attr('x2', width - margin.right)
         .attr('y1', y(0))
         .attr('y2', y(0))
-        .attr('stroke', '#888')
-        .attr('stroke-width', 1)
+        .attr('stroke', '#a78bfa')
+        .attr('stroke-width', 1.5)
         .attr('stroke-dasharray', '4,2');
       // Axis labels
       svg
@@ -614,11 +654,28 @@ const BarChart = ({
     startDate,
     endDate,
     interval,
-    windowSize.width,
-    windowSize.height,
+    dimensions.width,
+    dimensions.height,
+    containerWidth,
+    containerHeight,
   ]);
 
-  return <div ref={ref} />;
+  return (
+    <div
+      ref={ref}
+      style={{
+        width: containerWidth,
+        height: containerHeight,
+        minHeight: 320,
+        minWidth: 0,
+        position: 'relative',
+      }}
+      className="bar-chart-container"
+    >
+      {/* Chart will be rendered here by D3 using dimensions */}
+      {/* ...existing code... */}
+    </div>
+  );
 };
 
 export default BarChart;

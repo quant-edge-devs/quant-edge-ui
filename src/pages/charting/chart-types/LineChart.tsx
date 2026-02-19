@@ -31,19 +31,6 @@ const COLORS = [
 const GRADIENT_ID = 'line-gradient';
 const SHADOW_ID = 'line-shadow';
 
-function getXAxisLabel(dateStr: string, interval: string) {
-  if (interval === 'annual') {
-    // Just the year
-    return dateStr.slice(0, 4);
-  }
-  // Quarterly: show month and year
-  const date = new Date(dateStr);
-  if (!isNaN(date.getTime())) {
-    return date.toLocaleString('en-US', { month: 'short', year: 'numeric' });
-  }
-  return dateStr;
-}
-
 const LineChart = ({
   metric,
   secondaryMetric,
@@ -184,12 +171,9 @@ const LineChart = ({
       }[]
     ) => {
       d3.select(ref.current).selectAll('*').remove();
-      const container = ref.current;
       // Chart sizing and margins (match BarChart)
       // Use container size if available, else fallback to window size
       const parent = ref.current?.parentElement;
-      const pageWidth = parent?.offsetWidth || dimensions.width;
-      const pageHeight = parent?.offsetHeight || dimensions.height;
       const width =
         typeof containerWidth === 'number'
           ? containerWidth

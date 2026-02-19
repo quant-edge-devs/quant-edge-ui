@@ -1,46 +1,16 @@
 import { useState, useEffect } from 'react';
 import VerticalNavbar from '../../components/navbar/VerticalNavbar';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
-
 type StockInfo = {
   ticker: string;
   name: string;
   price: string;
-  // add more fields when needed
 };
 
 export const StartAnalyzing = () => {
   const [query, setQuery] = useState('');
   const [selectedTicker, setSelectedTicker] = useState<string | null>(null);
   const [stockInfo, setStockInfo] = useState<StockInfo | null>(null);
-
-  // --- Old backend search implementation (commented out) ---
-  /*
-  useEffect(() => {
-    const fetchTickers = async () => {
-      if (query.trim().length === 0) {
-        setResults([]);
-        return;
-      }
-      try {
-        const response = await fetch(`${API_BASE_URL}/stocks?ticker=${query}`);
-        const data = await response.json();
-        setResults(
-          (data.tickerResults || []).map((item: any) => ({
-            ticker: item.ticker,
-            name: item.name,
-          }))
-        );
-        setIsDropdownOpen(true);
-      } catch (error) {
-        setResults([]);
-      }
-    };
-    const delayDebounce = setTimeout(fetchTickers, 10);
-    return () => clearTimeout(delayDebounce);
-  }, [query]);
-  */
 
   // Fetch stock info when a ticker is selected
   useEffect(() => {
@@ -96,7 +66,7 @@ export const StartAnalyzing = () => {
             />
             <button
               type="submit"
-              className="absolute right-2 top-2 rounded bg-fuchsia-600 px-4 py-1 text-white hover:bg-fuchsia-700"
+              className="absolute top-2 right-2 rounded bg-fuchsia-600 px-4 py-1 text-white hover:bg-fuchsia-700"
               disabled={!!selectedTicker || !query.trim()}
             >
               Submit

@@ -29,19 +29,6 @@ const COLORS = [
   '#581c87', // Rich purple
 ];
 
-function getXAxisLabel(dateStr: string, interval: string) {
-  if (interval === 'annual') {
-    // Just the year
-    return dateStr.slice(0, 4);
-  }
-  // Quarterly: show month and year
-  const date = new Date(dateStr);
-  if (!isNaN(date.getTime())) {
-    return date.toLocaleString('en-US', { month: 'short', year: 'numeric' });
-  }
-  return dateStr;
-}
-
 const BarChart = ({
   tickers,
   metric,

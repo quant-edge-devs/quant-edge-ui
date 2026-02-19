@@ -1,6 +1,7 @@
 import { Formik, Form, Field, ErrorMessage } from 'formik';
 import emailjs from 'emailjs-com';
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 
 export const ContactUs = () => {
   const contactEmail = 'admin@quantedgecorp.com';
@@ -8,19 +9,36 @@ export const ContactUs = () => {
   const [error, setError] = useState('');
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-[#1a0820] px-4">
-      <div className="w-full max-w-lg rounded-2xl bg-[#231133] p-8 shadow-xl">
-        <h2 className="mb-6 text-center text-3xl font-bold text-white">
+    <div className="font-inter flex min-h-screen w-full items-center justify-center bg-[radial-gradient(ellipse_at_center,_#1E1B4B_30%,_#0F172A_100%)] px-4 text-white">
+      {/* Logo and home link at top left */}
+      <Link
+        to="/"
+        className="fixed top-8 left-8 z-50 flex items-center gap-4"
+        style={{ textDecoration: 'none' }}
+      >
+        <span className="rounded-xl bg-[#672eeb] p-2">
+          <svg width="40" height="40" fill="none" viewBox="0 0 32 32">
+            <rect width="32" height="32" rx="12" fill="#672eeb" />
+            <path
+              d="M10 22V12M16 22V16M22 22V10"
+              stroke="#fff"
+              strokeWidth="2"
+              strokeLinecap="round"
+            />
+          </svg>
+        </span>
+        <span className="ml-2 text-3xl font-bold text-white">QuantEdge</span>
+      </Link>
+      <div className="w-full max-w-lg rounded-2xl border border-[#672eeb] bg-[#181a2a] p-10 shadow-2xl">
+        <h2 className="mb-4 text-center text-3xl font-extrabold text-white">
           Contact Us
         </h2>
-        <p className="mb-6 text-center text-purple-200">
+        <p className="mb-6 text-center text-lg text-purple-200">
           Email us at{' '}
           <a
             href={`mailto:${contactEmail}`}
             className="text-fuchsia-400 underline hover:text-fuchsia-300"
-          >
-            {contactEmail}
-          </a>
+          ></a>
         </p>
 
         <Formik
@@ -42,7 +60,6 @@ export const ContactUs = () => {
           onSubmit={(values, { setSubmitting, resetForm }) => {
             setError('');
             setSent(false);
-            console.log(values.email);
             emailjs
               .send(
                 import.meta.env.VITE_EMAILJS_SERVICE_ID,
@@ -69,10 +86,13 @@ export const ContactUs = () => {
           }}
         >
           {({ isSubmitting }) => (
-            <Form className="flex flex-col gap-4">
+            <Form className="flex flex-col gap-5">
               <div>
+                <label className="mb-1 block text-xs text-purple-200">
+                  Name
+                </label>
                 <Field
-                  className="w-full rounded-md bg-[#2d1840] p-3 text-white placeholder-slate-400 focus:ring-2 focus:ring-fuchsia-400 focus:outline-none"
+                  className="w-full rounded-md border border-[#672eeb] bg-[#23203a] p-3 text-white placeholder-purple-200 focus:ring-1 focus:ring-[#672eeb] focus:outline-none"
                   type="text"
                   name="name"
                   placeholder="Your Name"
@@ -80,12 +100,15 @@ export const ContactUs = () => {
                 <ErrorMessage
                   name="name"
                   component="div"
-                  className="mt-1 text-sm text-red-400"
+                  className="mt-1 text-sm text-pink-400"
                 />
               </div>
               <div>
+                <label className="mb-1 block text-xs text-purple-200">
+                  Email
+                </label>
                 <Field
-                  className="w-full rounded-md bg-[#2d1840] p-3 text-white placeholder-slate-400 focus:ring-2 focus:ring-fuchsia-400 focus:outline-none"
+                  className="w-full rounded-md border border-[#672eeb] bg-[#23203a] p-3 text-white placeholder-purple-200 focus:ring-1 focus:ring-[#672eeb] focus:outline-none"
                   type="email"
                   name="email"
                   placeholder="Your Email"
@@ -93,13 +116,16 @@ export const ContactUs = () => {
                 <ErrorMessage
                   name="email"
                   component="div"
-                  className="mt-1 text-sm text-red-400"
+                  className="mt-1 text-sm text-pink-400"
                 />
               </div>
               <div>
+                <label className="mb-1 block text-xs text-purple-200">
+                  Message
+                </label>
                 <Field
                   as="textarea"
-                  className="w-full rounded-md bg-[#2d1840] p-3 text-white placeholder-slate-400 focus:ring-2 focus:ring-fuchsia-400 focus:outline-none"
+                  className="w-full rounded-md border border-[#672eeb] bg-[#23203a] p-3 text-white placeholder-purple-200 focus:ring-1 focus:ring-[#672eeb] focus:outline-none"
                   name="message"
                   placeholder="Your Message"
                   rows={5}
@@ -107,13 +133,13 @@ export const ContactUs = () => {
                 <ErrorMessage
                   name="message"
                   component="div"
-                  className="mt-1 text-sm text-red-400"
+                  className="mt-1 text-sm text-pink-400"
                 />
               </div>
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="mt-2 cursor-pointer rounded-lg bg-gradient-to-r from-fuchsia-500 to-purple-500 px-6 py-3 text-lg font-semibold text-white transition hover:from-fuchsia-600 hover:to-purple-600"
+                className="mt-2 cursor-pointer rounded-lg bg-[#672eeb] px-6 py-3 text-lg font-semibold text-white shadow transition hover:from-fuchsia-600 hover:to-purple-600"
               >
                 {isSubmitting ? 'Sending...' : 'Send Message'}
               </button>
@@ -123,7 +149,7 @@ export const ContactUs = () => {
                 </div>
               )}
               {error && (
-                <div className="mt-2 text-center text-red-400">{error}</div>
+                <div className="mt-2 text-center text-pink-400">{error}</div>
               )}
             </Form>
           )}

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { FaSearch, FaPlus } from 'react-icons/fa';
 import { Link, useNavigate } from 'react-router-dom';
 import LineChart from './chart-types/LineChart';
@@ -12,7 +12,7 @@ const METRICS = [
     sub: 'Company valuation vs. revenue',
     icon: (
       <svg width="20" height="20" fill="none" viewBox="0 0 20 20">
-        <rect width="20" height="20" rx="6" fill="#8B5CF6" />
+        <rect width="20" height="20" rx="6" fill="#672eeb" />
         <path
           d="M6 14V8M10 14V11M14 14V6"
           stroke="#fff"
@@ -27,7 +27,7 @@ const METRICS = [
     sub: 'Valuation vs. earnings',
     icon: (
       <svg width="20" height="20" fill="none" viewBox="0 0 20 20">
-        <rect width="20" height="20" rx="6" fill="#8B5CF6" />
+        <rect width="20" height="20" rx="6" fill="#672eeb" />
         <circle cx="10" cy="10" r="5" stroke="#fff" strokeWidth="1.5" />
       </svg>
     ),
@@ -37,7 +37,7 @@ const METRICS = [
     sub: 'Total company value',
     icon: (
       <svg width="20" height="20" fill="none" viewBox="0 0 20 20">
-        <rect width="20" height="20" rx="6" fill="#8B5CF6" />
+        <rect width="20" height="20" rx="6" fill="#672eeb" />
         <rect x="5" y="10" width="10" height="5" rx="2" fill="#fff" />
       </svg>
     ),
@@ -47,7 +47,7 @@ const METRICS = [
     sub: 'Annual dividend as % of price',
     icon: (
       <svg width="20" height="20" fill="none" viewBox="0 0 20 20">
-        <rect width="20" height="20" rx="6" fill="#8B5CF6" />
+        <rect width="20" height="20" rx="6" fill="#672eeb" />
         <path
           d="M10 5v10M5 10h10"
           stroke="#fff"
@@ -62,7 +62,7 @@ const METRICS = [
     sub: 'Profit per share',
     icon: (
       <svg width="20" height="20" fill="none" viewBox="0 0 20 20">
-        <rect width="20" height="20" rx="6" fill="#8B5CF6" />
+        <rect width="20" height="20" rx="6" fill="#672eeb" />
         <rect x="7" y="7" width="6" height="6" rx="2" fill="#fff" />
       </svg>
     ),
@@ -72,7 +72,7 @@ const METRICS = [
     sub: 'Total company revenue',
     icon: (
       <svg width="20" height="20" fill="none" viewBox="0 0 20 20">
-        <rect width="20" height="20" rx="6" fill="#8B5CF6" />
+        <rect width="20" height="20" rx="6" fill="#672eeb" />
         <rect x="5" y="12" width="10" height="3" rx="1.5" fill="#fff" />
       </svg>
     ),
@@ -82,7 +82,7 @@ const METRICS = [
     sub: 'Total company profit',
     icon: (
       <svg width="20" height="20" fill="none" viewBox="0 0 20 20">
-        <rect width="20" height="20" rx="6" fill="#8B5CF6" />
+        <rect width="20" height="20" rx="6" fill="#672eeb" />
         <rect x="5" y="5" width="10" height="10" rx="3" fill="#fff" />
       </svg>
     ),
@@ -106,13 +106,16 @@ export const PresetChartsPage = () => {
   const { startDate, endDate } = getDateRange(selectedTimeframe);
   const metric = selectedMetric;
 
+  // Memoize tickers array to avoid unnecessary re-renders
+  const tickers = useMemo(() => (ticker ? [ticker] : []), [ticker]);
+
   // Chart rendering logic
   let chartArea = null;
   if (ticker) {
     if (selectedChartType === 'Line Chart') {
       chartArea = (
         <LineChart
-          tickers={[ticker]}
+          tickers={tickers}
           metric={metric}
           startDate={startDate}
           endDate={endDate}
@@ -122,7 +125,7 @@ export const PresetChartsPage = () => {
     } else if (selectedChartType === 'Bar Chart') {
       chartArea = (
         <BarChart
-          tickers={[ticker]}
+          tickers={tickers}
           metric={metric}
           startDate={startDate}
           endDate={endDate}
@@ -164,19 +167,9 @@ export const PresetChartsPage = () => {
           <nav className="flex items-center gap-6">
             <Link
               to="/contact-us"
-              className="text-lg font-medium text-white transition hover:text-[#8B5CF6]"
+              className="text-lg font-medium text-white transition hover:text-[#672eeb]"
             >
               Feedback
-            </Link>
-            <Link to="#" className="text-lg text-white">
-              <svg width="24" height="24" fill="none" viewBox="0 0 24 24">
-                <path
-                  d="M12 2v2m6.364 1.636l-1.414 1.414M22 12h-2M19.364 19.364l-1.414-1.414M12 22v-2M4.636 19.364l1.414-1.414M2 12h2M4.636 4.636l1.414 1.414"
-                  stroke="#8B5CF6"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                />
-              </svg>
             </Link>
           </nav>
         </header>
@@ -192,7 +185,7 @@ export const PresetChartsPage = () => {
               </div>
             </div>
             <button
-              className="flex items-center gap-2 rounded-lg bg-[#8B5CF6] px-5 py-2 text-lg font-semibold text-white shadow transition hover:bg-[#672eeb]"
+              className="flex items-center gap-2 rounded-lg bg-[#672eeb] px-5 py-2 text-lg font-semibold text-white shadow transition hover:bg-[#672eeb]"
               onClick={() => navigate('/charting/custom')}
             >
               <FaPlus /> Add Custom Chart
@@ -207,18 +200,18 @@ export const PresetChartsPage = () => {
               </label>
               <div className="relative flex gap-2">
                 <input
-                  className="w-full rounded-lg border border-[#23203a]/60 bg-[#23203a] py-3 pr-4 pl-12 text-white placeholder-slate-400 focus:ring-2 focus:ring-[#8B5CF6] focus:outline-none"
+                  className="w-full rounded-lg border border-[#23203a]/60 bg-[#23203a] py-3 pr-4 pl-12 text-white placeholder-slate-400 focus:ring-2 focus:ring-[#672eeb] focus:outline-none"
                   placeholder="Search ticker (e.g., AAPL)"
                   value={tickerInput}
                   onChange={(e) => setTickerInput(e.target.value)}
                 />
                 <button
                   type="submit"
-                  className="absolute top-1/2 right-2 flex -translate-y-1/2 items-center gap-2 rounded-lg bg-[#8B5CF6] px-4 py-2 text-lg font-semibold text-white shadow transition hover:bg-[#672eeb]"
+                  className="absolute top-1/2 right-2 flex -translate-y-1/2 items-center gap-2 rounded-lg bg-[#672eeb] px-4 py-2 text-lg font-semibold text-white shadow transition hover:bg-[#672eeb]"
                 >
                   <FaSearch /> Search
                 </button>
-                <FaSearch className="pointer-events-none absolute top-1/2 left-4 -translate-y-1/2 text-[#8B5CF6]" />
+                <FaSearch className="pointer-events-none absolute top-1/2 left-4 -translate-y-1/2 text-[#672eeb]" />
               </div>
             </form>
             {/* Metric Selection */}
@@ -232,7 +225,7 @@ export const PresetChartsPage = () => {
                     key={m.label}
                     className={`flex max-w-xs min-w-[200px] flex-col items-start gap-2 rounded-xl border px-6 py-4 text-left break-words whitespace-normal transition ${
                       selectedMetric === m.label
-                        ? 'border-[#8B5CF6] bg-[#2d1e4a]'
+                        ? 'border-[#672eeb] bg-[#2d1e4a]'
                         : 'border-[#23203a]/60 bg-[#23203a] hover:bg-[#2d1e4a]/80'
                     }`}
                     onClick={() => setSelectedMetric(m.label)}
@@ -259,7 +252,7 @@ export const PresetChartsPage = () => {
                       key={type}
                       className={`rounded-lg px-6 py-2 font-semibold transition ${
                         selectedChartType === type
-                          ? 'bg-[#8B5CF6] text-white'
+                          ? 'bg-[#672eeb] text-white'
                           : 'bg-[#23203a] text-slate-300 hover:bg-[#2d1e4a]/80'
                       }`}
                       onClick={() => setSelectedChartType(type)}
@@ -279,7 +272,7 @@ export const PresetChartsPage = () => {
                       key={tf}
                       className={`rounded-lg px-6 py-2 font-semibold transition ${
                         selectedTimeframe === tf
-                          ? 'bg-[#8B5CF6] text-white'
+                          ? 'bg-[#672eeb] text-white'
                           : 'bg-[#23203a] text-slate-300 hover:bg-[#2d1e4a]/80'
                       }`}
                       onClick={() => setSelectedTimeframe(tf)}
@@ -292,7 +285,7 @@ export const PresetChartsPage = () => {
             </div>
           </div>
           {/* Chart Area */}
-          <div className="relative flex min-h-[800px] w-full flex-1 flex-col items-center justify-center rounded-2xl border-2 border-dashed border-[#8B5CF6]/40 bg-[#181a2a] p-4">
+          <div className="relative flex min-h-[800px] w-full flex-1 flex-col items-center justify-center rounded-2xl border-2 border-dashed border-[#672eeb]/40 bg-[#181a2a] p-4">
             {loading && (
               <div className="absolute inset-0 z-10 flex items-center justify-center rounded-2xl bg-black/40">
                 <div className="animate-pulse rounded-lg border border-[#23203a]/60 bg-[#181a2a] px-8 py-6 text-xl font-semibold text-white shadow-lg">
@@ -311,7 +304,7 @@ export const PresetChartsPage = () => {
                       width="6"
                       height="6"
                       rx="2"
-                      fill="#8B5CF6"
+                      fill="#672eeb"
                     />
                     <rect
                       x="18"
@@ -319,7 +312,7 @@ export const PresetChartsPage = () => {
                       width="6"
                       height="6"
                       rx="2"
-                      fill="#8B5CF6"
+                      fill="#672eeb"
                     />
                     <rect
                       x="8"
@@ -327,7 +320,7 @@ export const PresetChartsPage = () => {
                       width="6"
                       height="6"
                       rx="2"
-                      fill="#8B5CF6"
+                      fill="#672eeb"
                     />
                     <rect
                       x="18"
@@ -335,17 +328,19 @@ export const PresetChartsPage = () => {
                       width="6"
                       height="6"
                       rx="2"
-                      fill="#8B5CF6"
+                      fill="#672eeb"
                     />
                   </g>
                 </svg>
-                <span className="text-lg text-[#8B5CF6]">
+                <span className="text-lg text-[#672eeb]">
                   Enter a ticker above to see the chart
                 </span>
               </div>
             ) : (
               <div
-                className={`relative flex h-full w-full flex-col items-center justify-center${loading ? 'pointer-events-none opacity-0' : ''}`}
+                className={`relative flex h-full w-full flex-col items-center justify-center${
+                  loading ? 'pointer-events-none opacity-0' : ''
+                }`}
               >
                 {chartArea}
               </div>

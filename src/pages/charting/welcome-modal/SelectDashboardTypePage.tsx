@@ -7,18 +7,22 @@ export default function SelectDashboardTypePage() {
       {/* Navbar */}
       <header className="flex items-center justify-between px-12 py-6">
         <div className="flex items-center gap-4">
-          <span className="rounded-xl bg-[#672eeb] p-2">
-            <svg width="40" height="40" fill="none" viewBox="0 0 32 32">
-              <rect width="32" height="32" rx="12" fill="#672eeb" />
-              <path
-                d="M10 22V12M16 22V16M22 22V10"
-                stroke="#fff"
-                strokeWidth="2"
-                strokeLinecap="round"
-              />
-            </svg>
-          </span>
-          <span className="ml-2 text-3xl font-bold text-white">QuantEdge</span>
+          <Link to="/" className="flex cursor-pointer items-center gap-4">
+            <span className="rounded-xl bg-[#672eeb] p-2">
+              <svg width="40" height="40" fill="none" viewBox="0 0 32 32">
+                <rect width="32" height="32" rx="12" fill="#672eeb" />
+                <path
+                  d="M10 22V12M16 22V16M22 22V10"
+                  stroke="#fff"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                />
+              </svg>
+            </span>
+            <span className="ml-2 text-3xl font-bold text-white">
+              QuantEdge
+            </span>
+          </Link>
         </div>
         <nav className="flex items-center gap-6">
           <Link
@@ -26,16 +30,6 @@ export default function SelectDashboardTypePage() {
             className="text-lg font-medium text-white transition hover:text-[#8B5CF6]"
           >
             Feedback
-          </Link>
-          <Link to="#" className="text-lg text-white">
-            <svg width="24" height="24" fill="none" viewBox="0 0 24 24">
-              <path
-                d="M12 2v2m6.364 1.636l-1.414 1.414M22 12h-2M19.364 19.364l-1.414-1.414M12 22v-2M4.636 19.364l1.414-1.414M2 12h2M4.636 4.636l1.414 1.414"
-                stroke="#8B5CF6"
-                strokeWidth="2"
-                strokeLinecap="round"
-              />
-            </svg>
           </Link>
         </nav>
       </header>

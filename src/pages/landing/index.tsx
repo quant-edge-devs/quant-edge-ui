@@ -1,6 +1,7 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@headlessui/react';
 import { useAuth } from '../../contexts/AuthContext';
+import UserAvatar from '../../components/navbar/UserAvatar';
 
 export const Landing = () => {
   const navigate = useNavigate();
@@ -26,6 +27,13 @@ export const Landing = () => {
           <span className="ml-2 text-3xl font-bold text-white">QuantEdge</span>
         </div>
         <nav className="flex items-center gap-4">
+          {currentUser && (
+            <UserAvatar
+              displayName={currentUser.displayName}
+              email={currentUser.email}
+              onSignOut={signOut}
+            />
+          )}
           {!currentUser && (
             <Link
               to="/auth/log-in"
@@ -34,20 +42,21 @@ export const Landing = () => {
               Sign In
             </Link>
           )}
-          {currentUser && (
-            <button
-              onClick={signOut}
-              className="text-lg font-medium text-white transition hover:text-fuchsia-400"
+          {currentUser ? (
+            <Link
+              to="/charting/custom"
+              className="ml-2 rounded-lg bg-[#672eeb] px-6 py-2 text-lg font-semibold text-white shadow transition hover:bg-[#5a27c8]"
             >
-              Sign Out
-            </button>
+              Go to your Dashboard
+            </Link>
+          ) : (
+            <Link
+              to="/charting"
+              className="ml-2 rounded-lg bg-[#672eeb] px-6 py-2 text-lg font-semibold text-white shadow transition hover:bg-[#5a27c8]"
+            >
+              Get Started
+            </Link>
           )}
-          <Link
-            to="/charting"
-            className="ml-2 rounded-lg bg-[#672eeb] px-6 py-2 text-lg font-semibold text-white shadow transition hover:bg-[#5a27c8]"
-          >
-            Get Started
-          </Link>
         </nav>
       </header>
       {/* Main content */}

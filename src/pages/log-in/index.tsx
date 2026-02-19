@@ -1,7 +1,8 @@
 import { Form, Field, Formik } from 'formik';
 import { Button } from '@headlessui/react';
 import { useAuth } from '../../contexts/AuthContext';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import { useState } from 'react';
 
 const GoogleIcon = () => (
   <svg className="mr-2 h-6 w-6" viewBox="0 0 24 24">
@@ -15,7 +16,10 @@ const GoogleIcon = () => (
 );
 
 export const Login = () => {
-  const { loginWithGoogle, logout, currentUser } = useAuth();
+  const { loginWithGoogle, login, logout, currentUser } = useAuth();
+  const navigate = useNavigate();
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
 
   return (
     <div className="flex min-h-screen">
@@ -25,10 +29,10 @@ export const Login = () => {
           to="/"
           className="mb-8 flex items-center gap-3 text-2xl font-bold"
         >
-          <span className="rounded-xl bg-[#0a0a8b] p-3">
+          <span className="rounded-xl bg-[#672eeb] p-3">
             {/* Placeholder for logo icon */}
             <svg width="32" height="32" fill="none" viewBox="0 0 32 32">
-              <rect width="32" height="32" rx="12" fill="#a21caf" />
+              <rect width="32" height="32" rx="12" fill="#672eeb" />
               <path
                 d="M10 22V12M16 22V16M22 22V10"
                 stroke="#fff"
@@ -59,10 +63,27 @@ export const Login = () => {
         ) : (
           <Formik
             initialValues={{ email: '', password: '', remember: false }}
-            onSubmit={() => {}}
+            onSubmit={async (values, { setSubmitting }) => {
+              setError(null);
+              setLoading(true);
+              try {
+                await login(values.email, values.password);
+                setLoading(false);
+                navigate('/charting/custom');
+              } catch (err: any) {
+                setError(err.message || 'Failed to sign in');
+                setLoading(false);
+                setSubmitting(false);
+              }
+            }}
           >
             {() => (
               <Form className="flex w-full flex-col gap-4">
+                {error && (
+                  <div className="mb-2 rounded bg-red-600/80 px-4 py-2 text-sm text-white">
+                    {error}
+                  </div>
+                )}
                 <label className="text-sm font-semibold" htmlFor="email">
                   Email
                 </label>
@@ -97,16 +118,17 @@ export const Login = () => {
                   </label>
                   <Link
                     to="/auth/recover"
-                    className="text-sm text-fuchsia-400 hover:underline"
+                    className="text-sm text-[#672eeb] hover:underline"
                   >
                     Forgot password?
                   </Link>
                 </div>
                 <Button
                   type="submit"
-                  className="mt-2 mb-2 flex w-full cursor-pointer items-center justify-center rounded-lg bg-[#0a0a8b] py-3 text-lg font-semibold text-white shadow transition hover:bg-[#353967]"
+                  className="mt-2 mb-2 flex w-full cursor-pointer items-center justify-center rounded-lg bg-[#672eeb] py-3 text-lg font-semibold text-white shadow transition hover:bg-[#353967]"
+                  disabled={loading}
                 >
-                  Sign In
+                  {loading ? 'Signing In...' : 'Sign In'}
                 </Button>
                 <div className="my-2 flex items-center justify-center gap-2 text-slate-400">
                   <span className="h-px w-16 bg-slate-700" />
@@ -126,7 +148,7 @@ export const Login = () => {
                   Don't have an account?{' '}
                   <Link
                     to="/auth/sign-up"
-                    className="text-fuchsia-400 hover:underline"
+                    className="text-[#672eeb] hover:underline"
                   >
                     Sign up
                   </Link>
@@ -137,11 +159,11 @@ export const Login = () => {
         )}
       </div>
       {/* Right: Marketing panel */}
-      <div className="hidden w-1/2 flex-col items-center justify-center bg-gradient-to-br from-[#6d28d9] to-[#a21caf] p-16 text-white md:flex">
+      <div className="hidden w-1/2 flex-col items-center justify-center bg-gradient-to-br from-[#6d28d9] to-[#0e1020] p-16 text-white md:flex">
         <div className="flex flex-col items-center justify-center">
-          <span className="mb-8 rounded-2xl bg-fuchsia-700/80 p-8">
+          <span className="mb-8 rounded-2xl bg-[#672eeb] p-8">
             <svg width="64" height="64" fill="none" viewBox="0 0 32 32">
-              <rect width="32" height="32" rx="12" fill="#a21caf" />
+              <rect width="32" height="32" rx="12" fill="#672eeb" />
               <path
                 d="M10 22V12M16 22V16M22 22V10"
                 stroke="#fff"

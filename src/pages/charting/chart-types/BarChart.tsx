@@ -55,6 +55,8 @@ const BarChart = ({
 }: BarChartProps) => {
   const ref = useRef<HTMLDivElement>(null);
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
+  const [primaryData, setPrimaryData] = useState<any[]>([]);
+  const [secondaryData, setSecondaryData] = useState<any[]>([]);
   const lastFetchParams = useRef({
     tickers: '',
     metric: '',
@@ -83,10 +85,8 @@ const BarChart = ({
     return () => observer.disconnect();
   }, []);
 
+  // Fetch data only when chart params change (NOT on resize)
   useEffect(() => {
-    // Clear chart container before drawing
-    d3.select(ref.current).selectAll('*').remove();
-
     const paramsString = JSON.stringify({
       tickers: JSON.stringify(tickers),
       metric,
@@ -109,6 +109,7 @@ const BarChart = ({
       interval,
     };
     if (!tickers.length || !metric) return;
+    setLoading?.(true);
     const fetchMetricData = async (metricName: string) => {
       const promises = tickers.map(async (ticker) => {
         const endpoint =
@@ -158,16 +159,30 @@ const BarChart = ({
       });
       return Promise.all(promises);
     };
-    setLoading?.(true);
     Promise.all([
       fetchMetricData(metric),
       secondaryMetric && secondaryMetric !== 'None'
         ? fetchMetricData(secondaryMetric)
         : Promise.resolve([]),
-    ]).then(([primaryData, secondaryData]) => {
-      drawChart(primaryData, secondaryData);
+    ]).then(([primary, secondary]) => {
+      setPrimaryData(primary);
+      setSecondaryData(secondary);
       setLoading?.(false);
     });
+    // eslint-disable-next-line
+  }, [
+    tickers.join(','),
+    metric,
+    secondaryMetric,
+    startDate,
+    endDate,
+    interval,
+  ]);
+
+  // Draw chart when data or dimensions change
+  useEffect(() => {
+    d3.select(ref.current).selectAll('*').remove();
+    if (!primaryData.length) return;
 
     const BAR_GRADIENT_ID = 'bar-gradient';
     const BAR_SHADOW_ID = 'bar-shadow';
@@ -191,8 +206,6 @@ const BarChart = ({
       // Chart sizing and margins
       // Use container size if available, else fallback to window size
       const parent = ref.current?.parentElement;
-      const pageWidth = parent?.offsetWidth || dimensions.width;
-      const pageHeight = parent?.offsetHeight || dimensions.height;
       const width =
         typeof containerWidth === 'number'
           ? containerWidth
@@ -647,13 +660,11 @@ const BarChart = ({
         });
       }
     };
+
+    drawChart(primaryData, secondaryData);
   }, [
-    tickers.join(','),
-    metric,
-    secondaryMetric,
-    startDate,
-    endDate,
-    interval,
+    primaryData,
+    secondaryData,
     dimensions.width,
     dimensions.height,
     containerWidth,

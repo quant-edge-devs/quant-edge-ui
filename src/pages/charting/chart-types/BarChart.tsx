@@ -184,12 +184,6 @@ const BarChart = ({
         points: { date: string; value: number }[];
       }[]
     ) => {
-      // --- DEBUG LOGS ---
-      console.log('TICKERS:', tickers);
-      console.log('primaryData:', primaryData);
-      console.log('secondaryData:', secondaryData);
-      // --- END DEBUG LOGS ---
-
       // Chart sizing and margins
       // Use container size if available, else fallback to window size
       const parent = ref.current?.parentElement;

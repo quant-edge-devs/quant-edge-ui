@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { FaSearch, FaPlus } from 'react-icons/fa';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router';
 import LineChart from './chart-types/LineChart';
 import BarChart from './chart-types/BarChart';
 import { getDateRange } from './getDateRange';
@@ -110,6 +110,8 @@ export const PresetChartsPage = () => {
   const tickers = useMemo(() => (ticker ? [ticker] : []), [ticker]);
 
   // Chart rendering logic
+  // Determine if we should aggregate by year (for multi-year timeframes)
+  const aggregateByYear = ['3Y', '5Y', '10Y'].includes(selectedTimeframe);
   let chartArea = null;
   if (ticker) {
     if (selectedChartType === 'Line Chart') {
@@ -120,6 +122,7 @@ export const PresetChartsPage = () => {
           startDate={startDate}
           endDate={endDate}
           setLoading={setLoading}
+          interval={aggregateByYear ? 'annual' : 'quarter'}
         />
       );
     } else if (selectedChartType === 'Bar Chart') {
@@ -130,6 +133,7 @@ export const PresetChartsPage = () => {
           startDate={startDate}
           endDate={endDate}
           setLoading={setLoading}
+          interval={aggregateByYear ? 'annual' : 'quarter'}
         />
       );
     }
@@ -174,7 +178,7 @@ export const PresetChartsPage = () => {
           </nav>
         </header>
         {/* Main content */}
-        <main className="mx-auto flex w-full max-w-7xl flex-col items-center px-4 pt-8 pb-16">
+        <main className="animate-float-in mx-auto flex w-full max-w-7xl flex-col items-center px-4 pt-8 pb-16">
           <div className="mb-8 flex w-full items-center justify-between">
             <div>
               <h1 className="mb-2 text-4xl font-extrabold text-white">

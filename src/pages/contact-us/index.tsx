@@ -1,7 +1,7 @@
 import { Formik, Form, Field, ErrorMessage } from 'formik';
 import emailjs from 'emailjs-com';
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link } from 'react-router';
 
 export const ContactUs = () => {
   const contactEmail = 'admin@quantedgecorp.com';

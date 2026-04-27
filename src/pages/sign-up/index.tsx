@@ -1,7 +1,7 @@
 import { Form, Field, Formik } from 'formik';
 import { Button } from '@headlessui/react';
 import { useAuth } from '../../contexts/AuthContext';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router';
 import { useState } from 'react';
 import { updateProfile } from 'firebase/auth';
 

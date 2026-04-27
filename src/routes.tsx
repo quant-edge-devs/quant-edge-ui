@@ -13,6 +13,7 @@ import { Auth } from './pages/auth';
 import { PresetChartsPage } from './pages/charting/PresetChartsPage';
 import SelectDashboardTypePage from './pages/charting/welcome-modal/SelectDashboardTypePage';
 import CustomChartsPage from './pages/charting/CustomChartsPage';
+import TickerInfoPage from './pages/ticker-info';
 
 export const routes: RouteObject[] = [
   {
@@ -25,6 +26,7 @@ export const routes: RouteObject[] = [
       { path: 'charting', element: <SelectDashboardTypePage /> },
       { path: 'charting/preset', element: <PresetChartsPage /> },
       { path: 'charting/custom', element: <CustomChartsPage /> },
+      { path: 'ticker-info', element: <TickerInfoPage /> },
 
       {
         path: 'auth',

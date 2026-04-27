@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { FaPlus, FaTimes, FaTrash, FaEdit } from 'react-icons/fa';
-import { Link } from 'react-router-dom';
+import { Link } from 'react-router';
 import LineChart from './chart-types/LineChart';
 import BarChart from './chart-types/BarChart';
 import { useAuth } from '../../../src/contexts/AuthContext';
@@ -293,7 +293,7 @@ export default function CustomChartsPage() {
           </nav>
         </header>
         {/* Main content */}
-        <main className="flex w-full flex-col items-center pt-8 pb-16">
+        <main className="animate-float-in flex w-full flex-col items-center pt-8 pb-16">
           <div className="relative mb-6 flex w-full items-center justify-between">
             <Link
               to="/charting/preset"

@@ -1,11 +1,11 @@
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router';
 import { Button } from '@headlessui/react';
 import { useAuth } from '../../contexts/AuthContext';
 import UserAvatar from '../../components/navbar/UserAvatar';
 
 export const Landing = () => {
   const navigate = useNavigate();
-  const { currentUser, signOut } = useAuth();
+  const { currentUser, logout } = useAuth();
 
   return (
     <div className="min-h-screen w-full bg-[radial-gradient(ellipse_at_center,_#1E1B4B_30%,_#0F172A_100%)]">
@@ -31,9 +31,15 @@ export const Landing = () => {
             <UserAvatar
               displayName={currentUser.displayName}
               email={currentUser.email}
-              onSignOut={signOut}
+              onSignOut={logout}
             />
           )}
+          <Link
+            to="/ticker-info"
+            className="ml-2 rounded-lg bg-[#672eeb] px-6 py-2 text-lg font-semibold text-white shadow transition hover:bg-[#5a27c8]"
+          >
+            Ticker Info
+          </Link>
           {!currentUser && (
             <Link
               to="/auth/log-in"
@@ -47,7 +53,7 @@ export const Landing = () => {
               to="/charting/custom"
               className="ml-2 rounded-lg bg-[#672eeb] px-6 py-2 text-lg font-semibold text-white shadow transition hover:bg-[#5a27c8]"
             >
-              Go to your Dashboard
+              Dashboard
             </Link>
           ) : (
             <Link

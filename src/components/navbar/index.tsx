@@ -8,7 +8,7 @@ export const links = [
   { to: '/pricing', label: 'Pricing' },
   { to: '/auth/log-in', label: 'Log in' },
   { to: '/charting', label: 'Charting' },
+  { to: '/ticker-info', label: 'Ticker Info' },
 ];
 
-// No longer exporting a global Navbar. Use HorizontalNavbar or MobileNavbar directly where needed.
 export { HorizontalNavbar, MobileNavbar };

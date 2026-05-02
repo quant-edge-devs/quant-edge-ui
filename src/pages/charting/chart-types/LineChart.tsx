@@ -9,27 +9,114 @@ type LineChartProps = {
   secondaryMetric?: string;
   startDate: string;
   endDate: string;
-  interval?: string; // Add interval prop
+  interval?: string;
   setLoading?: (loading: boolean) => void;
   containerWidth?: string | number;
   containerHeight?: string | number;
 };
 
-// Replace d3.schemeCategory10 with new purple/dark theme colors
 const COLORS = [
-  '#a78bfa', // Light purple
-  '#7c3aed', // Vivid purple
-  '#6d28d9', // Deep purple
-  '#c084fc', // Soft purple
-  '#f472b6', // Pink accent
-  '#818cf8', // Indigo
-  '#312e81', // Dark indigo
-  '#f3e8ff', // Pale purple
-  '#ede9fe', // Lavender
-  '#581c87', // Rich purple
+  '#a78bfa',
+  '#34d399',
+  '#60a5fa',
+  '#f472b6',
+  '#fbbf24',
+  '#818cf8',
+  '#c084fc',
+  '#2dd4bf',
 ];
-const GRADIENT_ID = 'line-gradient';
-const SHADOW_ID = 'line-shadow';
+
+type DataPoint = { date: string; value: number };
+type Series = { ticker: string; points: DataPoint[] };
+
+function getDateKey(dateStr: string, interval: string) {
+  return interval === 'annual' ? dateStr.slice(0, 4) : dateStr.slice(0, 7);
+}
+
+function groupByDateKey(points: DataPoint[], interval: string) {
+  const grouped: Record<string, DataPoint> = {};
+  points.forEach((p) => {
+    const key = getDateKey(p.date, interval);
+    if (!grouped[key] || p.date > grouped[key].date) grouped[key] = p;
+  });
+  return grouped;
+}
+
+function dateLabel(key: string, interval: string) {
+  if (interval === 'annual') return key;
+  const [y, m] = key.split('-');
+  return new Date(+y, +m - 1, 1).toLocaleString('en-US', {
+    month: 'short',
+    year: 'numeric',
+  });
+}
+
+function formatAbbrev(v: d3.NumberValue) {
+  const n = +v;
+  if (n >= 1e12) return (n / 1e12).toFixed(1) + 'T';
+  if (n >= 1e9) return (n / 1e9).toFixed(1) + 'B';
+  if (n >= 1e6) return (n / 1e6).toFixed(1) + 'M';
+  if (n >= 1e3) return (n / 1e3).toFixed(1) + 'K';
+  return n.toFixed(2);
+}
+
+async function fetchSeriesData(
+  tickers: string[],
+  metricName: string,
+  startDate: string,
+  endDate: string,
+  interval: string
+): Promise<Series[]> {
+  return Promise.all(
+    tickers.map(async (ticker) => {
+      const endpoint =
+        metricName === 'Market Cap'
+          ? `${API_BASE_URL}/stocks/${ticker}/${startDate}/${endDate}/marketCapHistory`
+          : `${API_BASE_URL}/stocks/${ticker}/${startDate}/${endDate}/${interval}/${
+              metricName === 'Price To Earnings Ratio'
+                ? 'pe'
+                : metricName === 'Price To Sales Ratio'
+                  ? 'ps'
+                  : metricName === 'Dividend Yield (%)'
+                    ? 'dividendInfo'
+                    : metricName === 'Earnings Per Share'
+                      ? 'eps'
+                      : metricName === 'Revenues'
+                        ? 'revenues'
+                        : metricName === 'Net Income'
+                          ? 'netIncome'
+                          : ''
+            }`;
+      const raw = await (await fetch(endpoint)).json();
+      let points: DataPoint[] = [];
+      if (metricName === 'Revenues' && raw?.monthlyRevenuePoints) {
+        points = raw.monthlyRevenuePoints.map((d: any) => ({
+          date: d.date,
+          value: d.revenueActual,
+        }));
+      } else if (Array.isArray(raw)) {
+        points = raw.map((d: any) => ({
+          date: d.date,
+          value:
+            metricName === 'Market Cap'
+              ? d.marketCap
+              : metricName === 'Price To Sales Ratio'
+                ? d.psRatio
+                : metricName === 'Price To Earnings Ratio'
+                  ? d.peRatio
+                  : metricName === 'Dividend Yield (%)'
+                    ? d.yield
+                    : metricName === 'Earnings Per Share'
+                      ? d.eps
+                      : metricName === 'Net Income'
+                        ? d.ttmNetIncome
+                        : null,
+        }));
+      }
+      return { ticker, points: points.filter((p) => p.value != null) };
+    })
+  );
+}
 
 const LineChart = ({
   metric,
@@ -37,580 +124,496 @@ const LineChart = ({
   tickers,
   startDate,
   endDate,
-  interval = 'quarter', // Set default value for interval
+  interval = 'quarter',
   setLoading,
   containerWidth = '100%',
   containerHeight = '100%',
 }: LineChartProps) => {
   const ref = useRef<HTMLDivElement>(null);
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
-  // Fix: store tickers as a string in the cache
-  const lastFetchParams = useRef({
-    tickers: '',
-    metric: '',
-    secondaryMetric: '',
-    startDate: '',
-    endDate: '',
-    interval: '',
-  });
+  const [primaryData, setPrimaryData] = useState<Series[]>([]);
+  const [secondaryData, setSecondaryData] = useState<Series[]>([]);
+  const lastParams = useRef('');
 
-  // Use ResizeObserver for true dynamic resizing
+  /* ── Resize observer ── */
   useEffect(() => {
-    const container = ref.current;
-    if (!container) return;
-    const observer = new window.ResizeObserver((entries) => {
-      for (let entry of entries) {
-        const { width, height } = entry.contentRect;
-        setDimensions({ width, height });
-      }
+    const el = ref.current;
+    if (!el) return;
+    const ro = new ResizeObserver(([entry]) => {
+      const { width, height } = entry.contentRect;
+      setDimensions({ width, height });
     });
-    observer.observe(container);
-    // Set initial size
-    setDimensions({
-      width: container.offsetWidth,
-      height: container.offsetHeight,
-    });
-    return () => observer.disconnect();
+    ro.observe(el);
+    setDimensions({ width: el.offsetWidth, height: el.offsetHeight });
+    return () => ro.disconnect();
   }, []);
 
+  /* ── Data fetch ── */
   useEffect(() => {
-    // Only fetch if params actually changed
-    const paramsString = JSON.stringify({
-      tickers: JSON.stringify(tickers),
+    const key = JSON.stringify({
+      tickers,
       metric,
       secondaryMetric,
       startDate,
       endDate,
       interval,
     });
-    if (
-      lastFetchParams.current &&
-      paramsString === JSON.stringify(lastFetchParams.current)
-    )
-      return;
-    lastFetchParams.current = {
-      tickers: JSON.stringify(tickers),
-      metric,
-      secondaryMetric: secondaryMetric || '',
-      startDate,
-      endDate,
-      interval,
-    };
-    if (!tickers.length) return;
-    const fetchData = async () => {
-      // Fetch data for both metrics if secondaryMetric is set and not 'None'
-      const fetchMetricData = async (metricName: string) => {
-        const promises = tickers.map(async (ticker) => {
-          // Build endpoint, only add interval for metrics that support it
-          const endpoint =
-            metricName === 'Market Cap'
-              ? `${API_BASE_URL}/stocks/${ticker}/${startDate}/${endDate}/marketCapHistory`
-              : `${API_BASE_URL}/stocks/${ticker}/${startDate}/${endDate}/${interval}/${
-                  metricName === 'Price To Earnings Ratio'
-                    ? 'pe'
-                    : metricName === 'Price To Sales Ratio'
-                      ? 'ps'
-                      : metricName === 'Dividend Yield (%)'
-                        ? 'dividendInfo'
-                        : metricName === 'Earnings Per Share'
-                          ? 'eps'
-                          : metricName === 'Revenues'
-                            ? 'revenues'
-                            : metricName === 'Net Income'
-                              ? 'netIncome'
-                              : ''
-                }`;
-          const response = await fetch(endpoint);
-          const data = await response.json();
-          let points: { date: string; value: number }[] = [];
-          if (
-            metricName === 'Revenues' &&
-            data &&
-            Array.isArray(data.monthlyRevenuePoints)
-          ) {
-            points = data.monthlyRevenuePoints.map((d: any) => ({
-              date: d.date,
-              value: d.revenueActual,
-            }));
-          } else if (Array.isArray(data)) {
-            points = data.map((d: any) => {
-              let value = null;
-              if (metricName === 'Market Cap') value = d.marketCap;
-              else if (metricName === 'Price To Sales Ratio') value = d.psRatio;
-              else if (metricName === 'Price To Earnings Ratio')
-                value = d.peRatio;
-              else if (metricName === 'Dividend Yield (%)') value = d.yield;
-              else if (metricName === 'Earnings Per Share') value = d.eps;
-              else if (metricName === 'Net Income') value = d.ttmNetIncome;
-              return { date: d.date, value };
-            });
-          }
-          return { ticker, points };
-        });
-        return Promise.all(promises);
-      };
-      setLoading?.(true);
-      const [primaryData, secondaryData] = await Promise.all([
-        fetchMetricData(metric),
-        secondaryMetric && secondaryMetric !== 'None'
-          ? fetchMetricData(secondaryMetric)
-          : Promise.resolve([]),
-      ]);
-      drawChart(primaryData, secondaryData);
+    if (key === lastParams.current || !tickers.length) return;
+    lastParams.current = key;
+    setLoading?.(true);
+    Promise.all([
+      fetchSeriesData(tickers, metric, startDate, endDate, interval),
+      secondaryMetric && secondaryMetric !== 'None'
+        ? fetchSeriesData(
+            tickers,
+            secondaryMetric,
+            startDate,
+            endDate,
+            interval
+          )
+        : Promise.resolve([]),
+    ]).then(([primary, secondary]) => {
+      setPrimaryData(primary);
+      setSecondaryData(secondary);
       setLoading?.(false);
-    };
-
-    const drawChart = (
-      primaryData: {
-        ticker: string;
-        points: { date: string; value: number }[];
-      }[],
-      secondaryData: {
-        ticker: string;
-        points: { date: string; value: number }[];
-      }[]
-    ) => {
-      d3.select(ref.current).selectAll('*').remove();
-      // Chart sizing and margins (match BarChart)
-      // Use container size if available, else fallback to window size
-      const parent = ref.current?.parentElement;
-      const width =
-        typeof containerWidth === 'number'
-          ? containerWidth
-          : parent?.offsetWidth || dimensions.width * 0.8;
-      const height =
-        typeof containerHeight === 'number'
-          ? containerHeight
-          : parent?.offsetHeight || dimensions.height * 0.8;
-      const margin = {
-        top: 40,
-        right: 320,
-        bottom: 60,
-        left: 60,
-      };
-
-      // --- Date Normalization & Grouping ---
-      function getDateKey(dateStr: string, interval: string) {
-        if (interval === 'annual') return dateStr.slice(0, 4);
-        return dateStr.slice(0, 7); // YYYY-MM
-      }
-      // 1. Build a set of all normalized date keys
-      const allDateKeysSet = new Set<string>();
-      primaryData.forEach((series) => {
-        series.points.forEach((p) =>
-          allDateKeysSet.add(getDateKey(p.date, interval))
-        );
-      });
-      secondaryData.forEach((series) => {
-        series.points.forEach((p) =>
-          allDateKeysSet.add(getDateKey(p.date, interval))
-        );
-      });
-      const allDateKeys = Array.from(allDateKeysSet).sort();
-      // 2. For each ticker, for each date key, pick the last value in that month/year
-      function groupPointsByDateKey(
-        points: { date: string; value: number }[],
-        interval: string
-      ) {
-        const grouped: Record<string, { date: string; value: number }> = {};
-        points.forEach((p) => {
-          const key = getDateKey(p.date, interval);
-          if (!grouped[key] || p.date > grouped[key].date) {
-            grouped[key] = p;
-          }
-        });
-        return grouped;
-      }
-      // Build normalized data for primary and secondary
-      const normalizedPrimary = primaryData.map((series) => ({
-        ticker: series.ticker,
-        grouped: groupPointsByDateKey(series.points, interval),
-      }));
-      const normalizedSecondary = secondaryData.map((series) => ({
-        ticker: series.ticker,
-        grouped: groupPointsByDateKey(series.points, interval),
-      }));
-      // Map each date key to its x-axis label
-      const dateToLabel = Object.fromEntries(
-        allDateKeys.map((d) => {
-          if (interval === 'annual') return [d, d];
-          const [year, month] = d.split('-');
-          const dateObj = new Date(Number(year), Number(month) - 1, 1);
-          const label = dateObj.toLocaleString('en-US', {
-            month: 'short',
-            year: 'numeric',
-          });
-          return [d, label];
-        })
-      );
-      // For x scale, use allDateKeys, but for ticks, use one date per label
-      const allLabels = Array.from(
-        new Set(allDateKeys.map((d) => dateToLabel[d]))
-      );
-      const labelFirstDates = allLabels.map((lbl) =>
-        allDateKeys.find((d) => dateToLabel[d] === lbl)
-      );
-      // X scale (dates)
-      const x = d3
-        .scalePoint()
-        .domain(allDateKeys)
-        .range([margin.left, width - margin.right]);
-      // Y scales
-      const yMin =
-        d3.min(normalizedPrimary, (d) =>
-          d3.min(Object.values(d.grouped), (p) => p.value)
-        ) ?? 0;
-      const yMax =
-        d3.max(normalizedPrimary, (d) =>
-          d3.max(Object.values(d.grouped), (p) => p.value)
-        ) ?? 1;
-      const yDomainMin = Math.min(0, yMin);
-      const yDomainMax = Math.max(0, yMax);
-      const y = d3
-        .scaleLinear()
-        .domain([yDomainMin, yDomainMax])
-        .nice()
-        .range([height - margin.bottom, margin.top]);
-      let y2, y2Min, y2Max;
-      if (normalizedSecondary.length) {
-        y2Min =
-          d3.min(normalizedSecondary, (d) =>
-            d3.min(Object.values(d.grouped), (p) => p.value)
-          ) ?? 0;
-        y2Max =
-          d3.max(normalizedSecondary, (d) =>
-            d3.max(Object.values(d.grouped), (p) => p.value)
-          ) ?? 1;
-        y2 = d3
-          .scaleLinear()
-          .domain([Math.min(0, y2Min), Math.max(0, y2Max)])
-          .nice()
-          .range([height - margin.bottom, margin.top]);
-      }
-      const svg = d3
-        .select(ref.current)
-        .append('svg')
-        .attr('width', width)
-        .attr('height', height)
-        .attr(
-          'style',
-          // Use the requested background color
-          'border-radius: 24px; background: #181a2a; box-shadow: 0 4px 24px #a78bfa33, 0 1.5px 8px #00000033;'
-        );
-
-      // Gradient fill (update to purple gradient)
-      svg
-        .append('defs')
-        .append('linearGradient')
-        .attr('id', GRADIENT_ID)
-        .attr('x1', '0%')
-        .attr('y1', '0%')
-        .attr('x2', '0%')
-        .attr('y2', '100%')
-        .selectAll('stop')
-        .data([
-          { offset: '0%', color: '#a78bfa', opacity: 0.4 },
-          { offset: '100%', color: '#7c3aed', opacity: 0 },
-        ])
-        .enter()
-        .append('stop')
-        .attr('offset', (d) => d.offset)
-        .attr('stop-color', (d) => d.color)
-        .attr('stop-opacity', (d) => d.opacity);
-
-      // Drop shadow filter (update to purple shadow)
-      svg.append('defs').append('filter').attr('id', SHADOW_ID).html(`
-          <feDropShadow dx="0" dy="4" stdDeviation="4" flood-color="#a78bfa" flood-opacity="0.35" />
-        `);
-
-      // Y-axis number formatter
-      const formatAbbrev = (domainValue: d3.NumberValue) => {
-        const num =
-          typeof domainValue === 'number'
-            ? domainValue
-            : Number(domainValue.valueOf());
-        if (num >= 1e12) return (num / 1e12).toFixed(2) + 'T';
-        if (num >= 1e9) return (num / 1e9).toFixed(2) + 'B';
-        if (num >= 1e6) return (num / 1e6).toFixed(2) + 'M';
-        return num.toString();
-      };
-
-      // Axes
-      svg
-        .append('g')
-        .attr('transform', `translate(${margin.left},0)`)
-        .call(d3.axisLeft(y).tickFormat(formatAbbrev))
-        .selectAll('text')
-        .attr('fill', '#ede9fe');
-      if (normalizedSecondary.length && y2) {
-        svg
-          .append('g')
-          .attr('transform', `translate(${width - margin.right},0)`)
-          .call(d3.axisRight(y2).tickFormat(formatAbbrev))
-          .selectAll('text')
-          .attr('fill', '#ede9fe');
-      }
-      svg
-        .append('g')
-        .attr('transform', `translate(0,${height - margin.bottom})`)
-        .call(
-          d3
-            .axisBottom(x)
-            .tickValues(labelFirstDates as string[])
-            .tickFormat((d) => dateToLabel[d as string])
-        )
-        .selectAll('text')
-        .attr('fill', '#ede9fe')
-        .attr('transform', 'rotate(-30)')
-        .style('text-anchor', 'end');
-
-      // Axis labels
-      svg
-        .append('text')
-        .attr('x', width / 2)
-        .attr('y', height - 15)
-        .attr('text-anchor', 'middle')
-        .attr('fill', '#ede9fe')
-        .attr('font-size', 14)
-        .text(interval === 'annual' ? 'Year' : 'Month');
-      svg
-        .append('text')
-        .attr('transform', `rotate(-90)`)
-        .attr('x', -height / 2)
-        .attr('y', 20)
-        .attr('text-anchor', 'middle')
-        .attr('fill', '#ede9fe')
-        .attr('font-size', 14)
-        .text(metric);
-      if (secondaryData.length && secondaryMetric && y2) {
-        svg
-          .append('text')
-          .attr('transform', `rotate(-90)`)
-          .attr('x', -height / 2)
-          .attr('y', width - margin.right + 40)
-          .attr('text-anchor', 'middle')
-          .attr('fill', '#ede9fe')
-          .attr('font-size', 14)
-          .text(secondaryMetric);
-      }
-
-      // Tooltip (update to purple/dark theme)
-      d3.select(ref.current)
-        .append('div')
-        .attr('class', 'tooltip')
-        .style('position', 'absolute')
-        .style(
-          'background',
-          'linear-gradient(135deg, #231133 60%, #3b0764 100%)'
-        )
-        .style('color', '#f3e8ff')
-        .style('padding', '8px 16px')
-        .style('border-radius', '8px')
-        .style('pointer-events', 'none')
-        .style('font-size', '14px')
-        .style('box-shadow', '0 2px 8px #a78bfa55')
-        .style('opacity', 0);
-
-      // Line generator (rounded ends)
-      const line = d3
-        .line<{ date: string; value: number }>()
-        .x((d) => x(getDateKey(d.date, interval))!)
-        .y((d) => y(d.value))
-        .curve(d3.curveMonotoneX);
-      const line2 = y2
-        ? d3
-            .line<{ date: string; value: number }>()
-            .x((d) => x(getDateKey(d.date, interval))!)
-            .y((d) => y2!(d.value))
-        : null;
-
-      // Draw lines and points for each ticker (primary metric, solid)
-      normalizedPrimary.forEach((series, i) => {
-        // REMOVE Area gradient fill for classic line chart
-        // svg
-        //   .append('path')
-        //   .datum(Object.values(series.grouped))
-        //   .attr('fill', `url(#${GRADIENT_ID})`)
-        //   .attr('stroke', 'none')
-        //   .attr(
-        //     'd',
-        //     d3
-        //       .area<{ date: string; value: number }>()
-        //       .x((d) => x(getDateKey(d.date, interval))!)
-        //       .y0(y(0))
-        //       .y1((d) => y(d.value))
-        //       .curve(d3.curveMonotoneX)
-        //   );
-        // Line with shadow
-        svg
-          .append('path')
-          .datum(Object.values(series.grouped))
-          .attr('fill', 'none')
-          .attr('stroke', COLORS[i % COLORS.length])
-          .attr('stroke-width', 4)
-          .attr('stroke-linecap', 'round')
-          .attr('filter', `url(#${SHADOW_ID})`)
-          .attr('d', line);
-        // Points
-        svg
-          .selectAll(`.point-primary-${series.ticker}`)
-          .data(Object.values(series.grouped))
-          .enter()
-          .append('circle')
-          .attr('cx', (d) => x(getDateKey(d.date, interval))!)
-          .attr('cy', (d) => y(d.value))
-          .attr('r', 7)
-          .attr('fill', '#a78bfa')
-          .attr('stroke', '#fff')
-          .attr('stroke-width', 2)
-          .on('mouseover', function (event, d) {
-            d3.select(ref.current)
-              .select('.tooltip')
-              .style('opacity', 1)
-              .html(
-                `<strong style=\"color:#a78bfa\">${series.ticker}</strong><br/><span style=\"color:#ede9fe\">${dateToLabel[getDateKey(d.date, interval)]}</span><br/><span style=\"color:#f472b6\">${metric}: ${d.value !== null && d.value !== undefined ? d.value.toFixed(2) : 'N/A'}</span>`
-              )
-              .style('left', event.offsetX + 20 + 'px')
-              .style('top', event.offsetY + 'px');
-            d3.select(this).attr('fill', '#f472b6');
-          })
-          .on('mouseout', function () {
-            d3.select(ref.current).select('.tooltip').style('opacity', 0);
-            d3.select(this).attr('fill', '#a78bfa');
-          });
-      });
-      // Draw lines and points for each ticker (secondary metric, dotted)
-      if (
-        normalizedSecondary.length &&
-        y2 &&
-        secondaryMetric &&
-        secondaryMetric !== 'None'
-      ) {
-        normalizedSecondary.forEach((series, i) => {
-          svg
-            .append('path')
-            .datum(Object.values(series.grouped))
-            .attr('fill', 'none')
-            .attr('stroke', COLORS[i % COLORS.length])
-            .attr('stroke-width', 2)
-            .attr('stroke-dasharray', '6,4')
-            .attr('d', line2!);
-          svg
-            .selectAll(`.point-secondary-${series.ticker}`)
-            .data(Object.values(series.grouped))
-            .enter()
-            .append('circle')
-            .attr('cx', (d) => x(getDateKey(d.date, interval))!)
-            .attr('cy', (d) => y2!(d.value))
-            .attr('r', 6)
-            .attr('fill', COLORS[i % COLORS.length])
-            .attr('stroke', '#fff')
-            .attr('stroke-width', 2)
-            .on('mouseover', function (event, d) {
-              d3.select(ref.current)
-                .select('.tooltip')
-                .style('opacity', 1)
-                .html(
-                  `<strong>${series.ticker}</strong><br/>${dateToLabel[getDateKey(d.date, interval)]}<br/>${secondaryMetric}: ${d.value !== null && d.value !== undefined ? d.value.toFixed(2) : 'N/A'}`
-                )
-                .style('left', event.offsetX + 20 + 'px')
-                .style('top', event.offsetY + 'px');
-              d3.select(this).attr('fill', '#f472b6');
-            })
-            .on('mouseout', function () {
-              d3.select(ref.current).select('.tooltip').style('opacity', 0);
-              d3.select(this).attr('fill', COLORS[i % COLORS.length]);
-            });
-        });
-      }
-      // Draw zero line for clarity (make purple)
-      if (yMin < 0 || yMax > 0) {
-        svg
-          .append('line')
-          .attr('x1', margin.left)
-          .attr('x2', width - margin.right)
-          .attr('y1', y(0))
-          .attr('y2', y(0))
-          .attr('stroke', '#a78bfa')
-          .attr('stroke-width', 1.5)
-          .attr('stroke-dasharray', '4,2');
-      }
-      // Legend
-      const legend = svg
-        .append('g')
-        .attr(
-          'transform',
-          `translate(${width - margin.right + 80},${margin.top})`
-        );
-      primaryData.forEach((series, i) => {
-        legend
-          .append('rect')
-          .attr('x', 0)
-          .attr('y', i * 24)
-          .attr('width', 18)
-          .attr('height', 6)
-          .attr('fill', COLORS[i % COLORS.length]);
-        legend
-          .append('text')
-          .attr('x', 26)
-          .attr('y', i * 24 + 14)
-          .attr('fill', '#ede9fe')
-          .attr('font-size', 14)
-          .text(`${series.ticker} (${metric})`);
-      });
-      if (
-        secondaryData.length &&
-        secondaryMetric &&
-        secondaryMetric !== 'None'
-      ) {
-        secondaryData.forEach((series, i) => {
-          legend
-            .append('rect')
-            .attr('x', 0)
-            .attr('y', (primaryData.length + i) * 24)
-            .attr('width', 18)
-            .attr('height', 6)
-            .attr('fill', COLORS[i % COLORS.length])
-            .attr('stroke', '#fff')
-            .attr('stroke-width', 2)
-            .attr('stroke-dasharray', '6,4');
-          legend
-            .append('text')
-            .attr('x', 26)
-            .attr('y', (primaryData.length + i) * 24 + 14)
-            .attr('fill', '#ede9fe')
-            .attr('font-size', 14)
-            .text(`${series.ticker} (${secondaryMetric})`);
-        });
-      }
-    };
-    fetchData();
+    });
   }, [
-    tickers && tickers.join(','),
+    tickers.join(','),
     metric,
     secondaryMetric,
     startDate,
     endDate,
     interval,
-    dimensions.width,
-    dimensions.height,
-    containerWidth,
-    containerHeight,
   ]);
+
+  /* ── Draw ── */
+  useEffect(() => {
+    const container = ref.current;
+    if (!container || !primaryData.length) return;
+    d3.select(container).selectAll('*').remove();
+
+    // Prefer ResizeObserver dimensions (most accurate); fall back to offsetWidth/Height
+    const W = dimensions.width || container.offsetWidth || 600;
+    const H = dimensions.height || container.offsetHeight || 420;
+    if (W < 100 || H < 80) return;
+
+    const hasSecondary =
+      secondaryData.length > 0 && secondaryMetric && secondaryMetric !== 'None';
+    // left=82: ~50px for tick values + 16px gap + 16px for rotated axis title
+    // bottom=80: ~36px for rotated x-tick text + 20px gap + 14px for axis title + 10px padding
+    const margin = {
+      top: 52,
+      right: hasSecondary ? 62 : 24,
+      bottom: 80,
+      left: 82,
+    };
+    const innerW = W - margin.left - margin.right;
+    const innerH = H - margin.top - margin.bottom;
+
+    /* ── Build date key universe ── */
+    const keySet = new Set<string>();
+    [...primaryData, ...(hasSecondary ? secondaryData : [])].forEach((s) =>
+      s.points.forEach((p) => keySet.add(getDateKey(p.date, interval)))
+    );
+    const allKeys = Array.from(keySet).sort();
+
+    /* ── Smart x-tick reduction ── */
+    const MAX_TICKS = 10;
+    const step = Math.max(1, Math.ceil(allKeys.length / MAX_TICKS));
+    const tickKeys = allKeys.filter((_, i) => i % step === 0);
+
+    /* ── Scales ── */
+    const x = d3.scalePoint().domain(allKeys).range([0, innerW]);
+
+    const normPrimary = primaryData.map((s) => ({
+      ticker: s.ticker,
+      grouped: groupByDateKey(s.points, interval),
+    }));
+    const normSecondary = secondaryData.map((s) => ({
+      ticker: s.ticker,
+      grouped: groupByDateKey(s.points, interval),
+    }));
+
+    const allPrimaryVals = normPrimary.flatMap((s) =>
+      Object.values(s.grouped).map((p) => p.value)
+    );
+    const yMin = d3.min(allPrimaryVals) ?? 0;
+    const yMax = d3.max(allPrimaryVals) ?? 1;
+    const y = d3
+      .scaleLinear()
+      .domain([Math.min(0, yMin), yMax])
+      .nice()
+      .range([innerH, 0]);
+
+    let y2: d3.ScaleLinear<number, number> | null = null;
+    if (hasSecondary) {
+      const allSecVals = normSecondary.flatMap((s) =>
+        Object.values(s.grouped).map((p) => p.value)
+      );
+      y2 = d3
+        .scaleLinear()
+        .domain([Math.min(0, d3.min(allSecVals) ?? 0), d3.max(allSecVals) ?? 1])
+        .nice()
+        .range([innerH, 0]);
+    }
+
+    /* ── SVG ── */
+    const svg = d3
+      .select(container)
+      .append('svg')
+      .attr('width', W)
+      .attr('height', H)
+      .style('border-radius', '14px')
+      .style('background', 'transparent')
+      .style('display', 'block'); // removes inline-block gap; no overflow:visible
+
+    // Clip path so nothing draws outside plot area
+    svg
+      .append('defs')
+      .append('clipPath')
+      .attr('id', 'plot-clip')
+      .append('rect')
+      .attr('width', innerW)
+      .attr('height', innerH);
+
+    // Gradient for area fill
+    const grad = svg
+      .append('defs')
+      .append('linearGradient')
+      .attr('id', 'area-grad')
+      .attr('x1', '0')
+      .attr('y1', '0')
+      .attr('x2', '0')
+      .attr('y2', '1');
+    grad
+      .append('stop')
+      .attr('offset', '0%')
+      .attr('stop-color', COLORS[0])
+      .attr('stop-opacity', 0.25);
+    grad
+      .append('stop')
+      .attr('offset', '100%')
+      .attr('stop-color', COLORS[0])
+      .attr('stop-opacity', 0);
+
+    const g = svg
+      .append('g')
+      .attr('transform', `translate(${margin.left},${margin.top})`);
+
+    /* ── Grid lines ── */
+    y.ticks(5).forEach((tick) => {
+      g.append('line')
+        .attr('x1', 0)
+        .attr('x2', innerW)
+        .attr('y1', y(tick))
+        .attr('y2', y(tick))
+        .attr('stroke', 'rgba(255,255,255,0.06)')
+        .attr('stroke-dasharray', '4,4');
+    });
+
+    /* ── Axes ── */
+    // Y left
+    const yAxis = g.append('g').call(
+      d3
+        .axisLeft(y)
+        .ticks(5)
+        .tickFormat(formatAbbrev as any)
+    );
+    yAxis.select('.domain').remove();
+    yAxis.selectAll('.tick line').remove();
+    yAxis
+      .selectAll('.tick text')
+      .attr('fill', 'rgba(255,255,255,0.38)')
+      .attr('font-size', '12px')
+      .attr('font-family', 'inherit');
+
+    // Y right (secondary)
+    if (hasSecondary && y2) {
+      const y2Axis = g
+        .append('g')
+        .attr('transform', `translate(${innerW},0)`)
+        .call(
+          d3
+            .axisRight(y2)
+            .ticks(5)
+            .tickFormat(formatAbbrev as any)
+        );
+      y2Axis.select('.domain').remove();
+      y2Axis.selectAll('.tick line').remove();
+      y2Axis
+        .selectAll('.tick text')
+        .attr('fill', 'rgba(255,255,255,0.38)')
+        .attr('font-size', '12px')
+        .attr('font-family', 'inherit');
+    }
+
+    // X bottom
+    const xAxis = g
+      .append('g')
+      .attr('transform', `translate(0,${innerH})`)
+      .call(
+        d3
+          .axisBottom(x)
+          .tickValues(tickKeys)
+          .tickFormat((d) => dateLabel(d as string, interval))
+      );
+    xAxis.select('.domain').remove();
+    xAxis.selectAll('.tick line').remove();
+    xAxis
+      .selectAll('.tick text')
+      .attr('fill', 'rgba(255,255,255,0.38)')
+      .attr('font-size', '11px')
+      .attr('font-family', 'inherit')
+      .attr('transform', 'rotate(-38)')
+      .style('text-anchor', 'end')
+      .attr('dx', '-0.4em')
+      .attr('dy', '0.2em');
+
+    // Y-axis title — rotated, centered along chart height, at x=14 (clear of tick values at x≥32)
+    svg
+      .append('text')
+      .attr('transform', 'rotate(-90)')
+      .attr('x', -(margin.top + innerH / 2))
+      .attr('y', 14)
+      .attr('text-anchor', 'middle')
+      .attr('fill', 'rgba(255,255,255,0.35)')
+      .attr('font-size', '11px')
+      .attr('font-family', 'inherit')
+      .text(metric);
+
+    // X-axis title — centered below tick labels (tick labels end ~36px below axis; title sits at ~60px)
+    g.append('text')
+      .attr('x', innerW / 2)
+      .attr('y', innerH + 64)
+      .attr('text-anchor', 'middle')
+      .attr('fill', 'rgba(255,255,255,0.35)')
+      .attr('font-size', '11px')
+      .attr('font-family', 'inherit')
+      .text(interval === 'annual' ? 'Year' : 'Month');
+
+    /* ── Zero line ── */
+    if (yMin < 0) {
+      g.append('line')
+        .attr('x1', 0)
+        .attr('x2', innerW)
+        .attr('y1', y(0))
+        .attr('y2', y(0))
+        .attr('stroke', 'rgba(168,85,247,0.4)')
+        .attr('stroke-dasharray', '4,3')
+        .attr('stroke-width', 1);
+    }
+
+    /* ── Plot group (clipped) ── */
+    const plot = g.append('g').attr('clip-path', 'url(#plot-clip)');
+
+    /* ── Area + line for each primary series ── */
+    const lineGen = d3
+      .line<DataPoint>()
+      .x((d) => x(getDateKey(d.date, interval))!)
+      .y((d) => y(d.value))
+      .defined((d) => d.value != null)
+      .curve(d3.curveMonotoneX);
+
+    normPrimary.forEach((series, i) => {
+      const pts = Object.values(series.grouped).sort((a, b) =>
+        a.date.localeCompare(b.date)
+      );
+      const color = COLORS[i % COLORS.length];
+
+      // Area fill (only first series to keep it readable)
+      if (i === 0) {
+        const areaGen = d3
+          .area<DataPoint>()
+          .x((d) => x(getDateKey(d.date, interval))!)
+          .y0(innerH)
+          .y1((d) => y(d.value))
+          .defined((d) => d.value != null)
+          .curve(d3.curveMonotoneX);
+        plot
+          .append('path')
+          .datum(pts)
+          .attr('fill', 'url(#area-grad)')
+          .attr('d', areaGen);
+      }
+
+      // Line
+      plot
+        .append('path')
+        .datum(pts)
+        .attr('fill', 'none')
+        .attr('stroke', color)
+        .attr('stroke-width', 2.5)
+        .attr('stroke-linecap', 'round')
+        .attr('d', lineGen);
+
+      // Dots (small, show on hover)
+      plot
+        .selectAll(`.dot-p-${i}`)
+        .data(pts)
+        .enter()
+        .append('circle')
+        .attr('class', `dot-p-${i}`)
+        .attr('cx', (d) => x(getDateKey(d.date, interval))!)
+        .attr('cy', (d) => y(d.value))
+        .attr('r', 2.5)
+        .attr('fill', color)
+        .attr('stroke', 'rgba(6,5,15,0.8)')
+        .attr('stroke-width', 1.5);
+    });
+
+    /* ── Secondary metric lines ── */
+    if (hasSecondary && y2) {
+      const line2Gen = d3
+        .line<DataPoint>()
+        .x((d) => x(getDateKey(d.date, interval))!)
+        .y((d) => y2!(d.value))
+        .defined((d) => d.value != null)
+        .curve(d3.curveMonotoneX);
+
+      normSecondary.forEach((series, i) => {
+        const pts = Object.values(series.grouped).sort((a, b) =>
+          a.date.localeCompare(b.date)
+        );
+        const color = COLORS[(i + 4) % COLORS.length];
+        plot
+          .append('path')
+          .datum(pts)
+          .attr('fill', 'none')
+          .attr('stroke', color)
+          .attr('stroke-width', 2)
+          .attr('stroke-dasharray', '6,3')
+          .attr('d', line2Gen);
+      });
+    }
+
+    /* ── Tooltip + crosshair ── */
+    const tooltip = d3
+      .select(container)
+      .append('div')
+      .style('position', 'absolute')
+      .style('background', 'rgba(10,8,20,0.92)')
+      .style('border', '1px solid rgba(168,85,247,0.3)')
+      .style('color', '#e2e8f0')
+      .style('padding', '10px 14px')
+      .style('border-radius', '10px')
+      .style('font-size', '13px')
+      .style('line-height', '1.6')
+      .style('pointer-events', 'none')
+      .style('white-space', 'nowrap')
+      .style('box-shadow', '0 4px 24px rgba(109,40,217,0.25)')
+      .style('opacity', '0')
+      .style('transition', 'opacity 0.15s');
+
+    const crosshair = g
+      .append('line')
+      .attr('y1', 0)
+      .attr('y2', innerH)
+      .attr('stroke', 'rgba(168,85,247,0.35)')
+      .attr('stroke-width', 1)
+      .attr('stroke-dasharray', '4,3')
+      .style('opacity', '0');
+
+    // Invisible overlay for mouse events
+    g.append('rect')
+      .attr('width', innerW)
+      .attr('height', innerH)
+      .attr('fill', 'transparent')
+      .on('pointermove', function (event) {
+        const [mx] = d3.pointer(event);
+        // Snap to nearest data key
+        const nearest = allKeys.reduce((best, k) => {
+          const kx = x(k)!;
+          return Math.abs(kx - mx) < Math.abs((x(best) ?? 0) - mx) ? k : best;
+        }, allKeys[0]);
+
+        const kx = x(nearest)!;
+        crosshair.attr('x1', kx).attr('x2', kx).style('opacity', '1');
+
+        const label = dateLabel(nearest, interval);
+        const lines = normPrimary.map((s, i) => {
+          const pt = s.grouped[nearest];
+          const color = COLORS[i % COLORS.length];
+          return `<span style="color:${color}">${s.ticker}</span>: ${pt ? formatAbbrev(pt.value) : '—'}`;
+        });
+        if (hasSecondary && y2) {
+          normSecondary.forEach((s, i) => {
+            const pt = s.grouped[nearest];
+            const color = COLORS[(i + 4) % COLORS.length];
+            lines.push(
+              `<span style="color:${color}">${s.ticker} (${secondaryMetric})</span>: ${pt ? formatAbbrev(pt.value) : '—'}`
+            );
+          });
+        }
+
+        tooltip
+          .style('opacity', '1')
+          .html(
+            `<div style="margin-bottom:4px;font-size:11px;color:rgba(255,255,255,0.4)">${label}</div>${lines.join('<br/>')}`
+          )
+          .style(
+            'left',
+            `${kx + margin.left + (kx > innerW / 2 ? -160 : 16)}px`
+          )
+          .style('top', `${margin.top + 8}px`);
+      })
+      .on('pointerleave', () => {
+        crosshair.style('opacity', '0');
+        tooltip.style('opacity', '0');
+      });
+
+    /* ── Legend (top, horizontal) ── */
+    const legendG = svg
+      .append('g')
+      .attr('transform', `translate(${margin.left},${margin.top - 32})`);
+    const legendItems = [
+      ...normPrimary.map((s, i) => ({
+        label: `${s.ticker} · ${metric}`,
+        color: COLORS[i % COLORS.length],
+        dash: false,
+      })),
+      ...(hasSecondary
+        ? normSecondary.map((s, i) => ({
+            label: `${s.ticker} · ${secondaryMetric}`,
+            color: COLORS[(i + 4) % COLORS.length],
+            dash: true,
+          }))
+        : []),
+    ];
+    let lx = 0;
+    legendItems.forEach(({ label, color, dash }) => {
+      const row = legendG.append('g').attr('transform', `translate(${lx},0)`);
+      row
+        .append('line')
+        .attr('x1', 0)
+        .attr('x2', 16)
+        .attr('y1', 7)
+        .attr('y2', 7)
+        .attr('stroke', color)
+        .attr('stroke-width', dash ? 1.5 : 2.5)
+        .attr('stroke-dasharray', dash ? '4,2' : 'none');
+      row
+        .append('text')
+        .attr('x', 22)
+        .attr('y', 11)
+        .attr('font-size', '12px')
+        .attr('fill', 'rgba(255,255,255,0.55)')
+        .attr('font-family', 'inherit')
+        .text(label);
+      lx += label.length * 7.2 + 36;
+    });
+  }, [primaryData, secondaryData, dimensions.width, dimensions.height]);
+
   return (
     <div
       ref={ref}
       style={{
         width: containerWidth,
         height: containerHeight,
-        minHeight: 320,
+        minHeight: 0,
         minWidth: 0,
         position: 'relative',
       }}
-      className="line-chart-container"
-    >
-      {/* Chart will be rendered here by D3 using dimensions */}
-    </div>
+    />
   );
 };
 

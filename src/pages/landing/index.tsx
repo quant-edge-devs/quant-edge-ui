@@ -1,201 +1,534 @@
 import { Link, useNavigate } from 'react-router';
-import { Button } from '@headlessui/react';
 import { useAuth } from '../../contexts/AuthContext';
 import UserAvatar from '../../components/navbar/UserAvatar';
+import { useEffect, useRef, useState } from 'react';
+
+function useScrollReveal(threshold = 0.12) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [visible, setVisible] = useState(false);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) setVisible(true);
+      },
+      { threshold }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+  return { ref, visible };
+}
+
+const revealClass = (visible: boolean) =>
+  `transition-all duration-700 ${visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`;
 
 export const Landing = () => {
   const navigate = useNavigate();
   const { currentUser, logout } = useAuth();
+  const [scrolled, setScrolled] = useState(false);
+
+  const statsReveal = useScrollReveal();
+  const featuresReveal = useScrollReveal();
+  const howReveal = useScrollReveal();
+  const ctaReveal = useScrollReveal();
+
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 24);
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
 
   return (
-    <div className="min-h-screen w-full bg-[radial-gradient(ellipse_at_center,_#1E1B4B_30%,_#0F172A_100%)]">
-      {/* Header */}
-      <header className="flex items-center justify-between px-12 py-6">
-        <div className="flex items-center gap-4">
-          <span className="rounded-xl bg-[#672eeb] p-2">
-            {/* Logo icon */}
-            <svg width="40" height="40" fill="none" viewBox="0 0 32 32">
-              <rect width="32" height="32" rx="12" fill="#672eeb" />
-              <path
-                d="M10 22V12M16 22V16M22 22V10"
-                stroke="#fff"
-                strokeWidth="2"
-                strokeLinecap="round"
-              />
-            </svg>
-          </span>
-          <span className="ml-2 text-3xl font-bold text-white">QuantEdge</span>
-        </div>
-        <nav className="flex items-center gap-4">
-          {currentUser && (
-            <UserAvatar
-              displayName={currentUser.displayName}
-              email={currentUser.email}
-              onSignOut={logout}
+    <div className="min-h-screen w-full overflow-x-hidden bg-[#06050f] text-white">
+      {/* ── Ambient background orbs ── */}
+      <div className="pointer-events-none fixed inset-0 overflow-hidden">
+        <div className="animate-orb absolute -top-52 -left-52 h-[700px] w-[700px] rounded-full bg-purple-700 blur-[140px]" />
+        <div className="animate-orb-delay absolute top-1/2 -right-48 h-[550px] w-[550px] rounded-full bg-violet-600 blur-[130px]" />
+        <div className="animate-orb-slow absolute -bottom-32 left-1/3 h-[450px] w-[450px] rounded-full bg-indigo-900 blur-[120px]" />
+      </div>
+
+      {/* ── Navbar ── */}
+      <header
+        className={`fixed top-0 right-0 left-0 z-50 transition-all duration-300 ${
+          scrolled
+            ? 'border-b border-white/[0.06] bg-[#06050f]/75 backdrop-blur-xl'
+            : 'bg-transparent'
+        }`}
+      >
+        <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
+          {/* Logo */}
+          <Link to="/">
+            <img
+              src="/quantedge-logo.svg"
+              alt="QuantEdge"
+              className="h-8 w-auto"
             />
-          )}
-          <Link
-            to="/ticker-info"
-            className="ml-2 rounded-lg bg-[#672eeb] px-6 py-2 text-lg font-semibold text-white shadow transition hover:bg-[#5a27c8]"
-          >
-            Ticker Info
           </Link>
-          {!currentUser && (
-            <Link
-              to="/auth/log-in"
-              className="text-lg font-medium text-white transition hover:text-fuchsia-400"
+
+          {/* Center nav */}
+          <nav className="hidden items-center gap-1 md:flex">
+            <a
+              href="#features"
+              className="rounded-lg px-4 py-2 text-sm font-medium text-white/60 transition hover:bg-white/[0.06] hover:text-white"
             >
-              Sign In
-            </Link>
-          )}
-          {currentUser ? (
-            <Link
-              to="/charting/custom"
-              className="ml-2 rounded-lg bg-[#672eeb] px-6 py-2 text-lg font-semibold text-white shadow transition hover:bg-[#5a27c8]"
+              Features
+            </a>
+            <a
+              href="#how-it-works"
+              className="rounded-lg px-4 py-2 text-sm font-medium text-white/60 transition hover:bg-white/[0.06] hover:text-white"
             >
-              Dashboard
-            </Link>
-          ) : (
-            <Link
-              to="/charting"
-              className="ml-2 rounded-lg bg-[#672eeb] px-6 py-2 text-lg font-semibold text-white shadow transition hover:bg-[#5a27c8]"
-            >
-              Get Started
-            </Link>
-          )}
-        </nav>
+              How it works
+            </a>
+          </nav>
+
+          {/* Auth actions */}
+          <div className="flex items-center gap-3">
+            {currentUser ? (
+              <>
+                <UserAvatar
+                  displayName={currentUser.displayName}
+                  email={currentUser.email}
+                  onSignOut={logout}
+                />
+                <Link
+                  to="/charting/custom"
+                  className="rounded-lg bg-purple-600 px-4 py-2 text-sm font-semibold text-white shadow shadow-purple-900/40 transition hover:bg-purple-500"
+                >
+                  Dashboard
+                </Link>
+              </>
+            ) : (
+              <>
+                <Link
+                  to="/auth/log-in"
+                  className="rounded-lg px-4 py-2 text-sm font-medium text-white/60 transition hover:text-white"
+                >
+                  Sign In
+                </Link>
+                <Link
+                  to="/charting"
+                  className="rounded-lg bg-purple-600 px-4 py-2 text-sm font-semibold text-white shadow shadow-purple-900/40 transition hover:bg-purple-500"
+                >
+                  Get Started
+                </Link>
+              </>
+            )}
+          </div>
+        </div>
       </header>
-      {/* Main content */}
-      <main className="animate-float-in flex flex-col items-center justify-center px-4 pt-10 pb-16">
-        {/* <div className="mb-6 flex w-full justify-center">
-          <span className="rounded-full bg-fuchsia-900/30 px-6 py-2 text-lg font-medium text-fuchsia-200 shadow">
-            <span className="inline-flex items-center gap-2">
-              <svg width="20" height="20" fill="none" viewBox="0 0 24 24">
-                <path
-                  d="M12 2v2m6.364 1.636l-1.414 1.414M22 12h-2M19.364 19.364l-1.414-1.414M12 22v-2M4.636 19.364l1.414-1.414M2 12h2M4.636 4.636l1.414 1.414"
-                  stroke="#a21caf"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                />
-              </svg>
-              Institutional-Grade Analytics
-            </span>
-          </span>
-        </div> */}
-        <h1 className="mb-8 text-center text-5xl leading-tight font-extrabold tracking-tight md:text-7xl">
-          <span className="text-white">Welcome to </span>
-          <span className="text-[#8B5CF6]">QuantEdge</span>
-        </h1>
-        <div className="mb-7 text-center text-2xl font-medium text-slate-300 md:text-3xl">
-          Bringing institutional-grade analytics to retail investors
-        </div>
-        <div className="mb-8 bg-gradient-to-r from-fuchsia-400 to-purple-400 bg-clip-text text-center text-3xl font-extrabold text-transparent md:text-5xl">
-          <span className="text-[#8B5CF6]">Raw Data. </span>
-          <span className="text-[#9671ee]">Real Stories. </span>
-          <span className="text-white">Stunning Visuals.</span>
-        </div>
-        <Button
-          className="mt-4 cursor-pointer rounded-lg bg-[#672eeb] bg-gradient-to-r px-10 py-4 text-xl font-semibold text-white shadow-lg transition hover:bg-[#5a27c8]"
-          onClick={() => navigate('/charting')}
-        >
-          Start Analyzing
-        </Button>
-      </main>
-      {/* Features section */}
-      <section className="mx-auto mt-4 mb-10 flex w-full max-w-7xl flex-col items-center justify-center px-4">
-        <div className="grid w-full gap-8 md:grid-cols-3">
-          {/* Card 1 */}
-          <div className="group rounded-2xl border border-[#23203a]/60 bg-[#181a2a] p-8 shadow-lg transition hover:bg-[#23203a] hover:shadow-xl">
-            <div className="mb-6 flex h-14 w-14 items-center justify-center rounded-xl bg-[#672eeb]/20">
-              <svg width="32" height="32" fill="none" viewBox="0 0 32 32">
-                <rect width="32" height="32" rx="12" fill="#8B5CF6" />
-                <path
-                  d="M10 22V12M16 22V16M22 22V10"
-                  stroke="#fff"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                />
-              </svg>
+
+      {/* ── Hero ── */}
+      <section className="relative flex min-h-screen items-center pt-20">
+        <div className="mx-auto grid w-full max-w-7xl gap-12 px-6 py-24 lg:grid-cols-2 lg:items-center lg:gap-20">
+          {/* Left: copy */}
+          <div className="animate-fade-up">
+            <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-purple-500/30 bg-purple-500/10 px-4 py-1.5">
+              <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-purple-400" />
+              <span className="text-sm font-medium text-purple-300">
+                Institutional-grade analytics
+              </span>
             </div>
-            <div className="mb-2 text-xl font-bold text-white">
-              Multiple Chart Types
-            </div>
-            <div className="text-md text-slate-300">
-              Line, area, and bar charts to visualize any metric
+
+            <h1 className="mb-6 text-5xl leading-[1.08] font-extrabold tracking-tight lg:text-6xl xl:text-7xl">
+              Market data that
+              <br />
+              <span className="bg-gradient-to-r from-purple-400 via-violet-300 to-purple-400 bg-clip-text text-transparent">
+                tells the story
+              </span>
+            </h1>
+
+            <p className="mb-10 max-w-md text-lg leading-relaxed text-white/55">
+              QuantEdge brings the analytics power of institutional trading
+              desks to every investor — real data, stunning visuals, zero noise.
+            </p>
+
+            <div className="flex flex-wrap items-center gap-4">
+              <button
+                onClick={() => navigate('/charting')}
+                className="group rounded-xl bg-purple-600 px-8 py-3.5 text-base font-semibold text-white shadow-lg shadow-purple-900/40 transition hover:bg-purple-500 hover:shadow-purple-800/50"
+              >
+                Start Analyzing
+                <span className="ml-2 inline-block transition-transform group-hover:translate-x-0.5">
+                  →
+                </span>
+              </button>
+              <Link
+                to="/ticker-info"
+                className="rounded-xl border border-white/10 px-8 py-3.5 text-base font-semibold text-white/70 transition hover:border-white/20 hover:bg-white/[0.05] hover:text-white"
+              >
+                Explore Tickers
+              </Link>
             </div>
           </div>
-          {/* Card 2 */}
-          <div className="group rounded-2xl border border-[#23203a]/60 bg-[#181a2a] p-8 shadow-lg transition hover:bg-[#23203a] hover:shadow-xl">
-            <div className="mb-6 flex h-14 w-14 items-center justify-center rounded-xl bg-[#672eeb]/20">
-              <svg width="32" height="32" fill="none" viewBox="0 0 32 32">
-                <rect width="32" height="32" rx="12" fill="#8B5CF6" />
-                <ellipse
-                  cx="16"
-                  cy="16"
-                  rx="7"
-                  ry="7"
-                  stroke="#fff"
-                  strokeWidth="2"
-                />
-                <circle cx="16" cy="16" r="2.5" fill="#fff" />
-              </svg>
-            </div>
-            <div className="mb-2 text-xl font-bold text-white">
-              Historically Accurate Data
-            </div>
-            <div className="text-md text-slate-300">
-              Access historical market data and fundamental metrics
-            </div>
-          </div>
-          {/* Card 3 */}
-          <div className="group rounded-2xl border border-[#23203a]/60 bg-[#181a2a] p-8 shadow-lg transition hover:bg-[#23203a] hover:shadow-xl">
-            <div className="mb-6 flex h-14 w-14 items-center justify-center rounded-xl bg-[#672eeb]/20">
-              <svg width="32" height="32" fill="none" viewBox="0 0 32 32">
-                <rect width="32" height="32" rx="12" fill="#8B5CF6" />
+
+          {/* Right: chart card */}
+          <div className="animate-fade-up-delay relative">
+            {/* Main chart card */}
+            <div className="relative rounded-2xl border border-white/[0.07] bg-white/[0.03] p-6 shadow-2xl shadow-purple-950/40 backdrop-blur-sm">
+              {/* Card header */}
+              <div className="mb-5 flex items-start justify-between">
+                <div>
+                  <div className="text-xs font-medium tracking-widest text-white/40 uppercase">
+                    AAPL · Apple Inc.
+                  </div>
+                  <div className="mt-1 text-3xl font-bold tracking-tight">
+                    $189.42
+                  </div>
+                  <div className="mt-0.5 text-sm text-white/50">
+                    +$4.57 today
+                  </div>
+                </div>
+                <span className="rounded-lg bg-emerald-500/15 px-3 py-1.5 text-sm font-semibold text-emerald-400 ring-1 ring-emerald-500/20">
+                  +2.47%
+                </span>
+              </div>
+
+              {/* Animated SVG chart */}
+              <svg
+                viewBox="0 0 380 140"
+                className="w-full"
+                preserveAspectRatio="none"
+                style={{ height: '140px' }}
+              >
+                <defs>
+                  <linearGradient id="areaGrad" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#7C3AED" stopOpacity="0.3" />
+                    <stop offset="100%" stopColor="#7C3AED" stopOpacity="0" />
+                  </linearGradient>
+                  <linearGradient id="lineGrad" x1="0" y1="0" x2="1" y2="0">
+                    <stop offset="0%" stopColor="#A855F7" />
+                    <stop offset="100%" stopColor="#C084FC" />
+                  </linearGradient>
+                </defs>
+
+                {/* Subtle grid */}
+                {[35, 70, 105].map((y) => (
+                  <line
+                    key={y}
+                    x1="0"
+                    y1={y}
+                    x2="380"
+                    y2={y}
+                    stroke="white"
+                    strokeOpacity="0.04"
+                    strokeWidth="1"
+                  />
+                ))}
+
+                {/* Area fill */}
                 <path
-                  d="M16 10c-3 0-6 2-6 5.5 0 4.5 6 7.5 6 7.5s6-3 6-7.5C22 12 19 10 16 10z"
-                  stroke="#fff"
-                  strokeWidth="2"
+                  d="M0,130 C30,126 55,118 80,108 C105,98 125,92 150,82 C175,72 195,64 220,54 C245,44 268,34 295,24 C318,15 345,9 370,4 L380,2 L380,140 L0,140 Z"
+                  fill="url(#areaGrad)"
+                />
+
+                {/* Animated line (pathLength="1" so dasharray works) */}
+                <path
+                  pathLength="1"
+                  d="M0,130 C30,126 55,118 80,108 C105,98 125,92 150,82 C175,72 195,64 220,54 C245,44 268,34 295,24 C318,15 345,9 370,4 L380,2"
+                  stroke="url(#lineGrad)"
+                  strokeWidth="2.5"
                   fill="none"
+                  className="chart-draw"
                 />
+
+                {/* End glow dot */}
+                <circle
+                  cx="380"
+                  cy="2"
+                  r="5"
+                  fill="#A855F7"
+                  fillOpacity="0.25"
+                />
+                <circle cx="380" cy="2" r="3" fill="#C084FC" />
               </svg>
+
+              {/* Metric pills */}
+              <div className="mt-4 grid grid-cols-3 gap-2.5">
+                {[
+                  { label: 'P/E Ratio', value: '28.5x' },
+                  { label: 'Market Cap', value: '$2.94T' },
+                  { label: 'Revenue', value: '$383B' },
+                ].map((m) => (
+                  <div
+                    key={m.label}
+                    className="rounded-xl bg-white/[0.04] p-3 text-center ring-1 ring-white/[0.05]"
+                  >
+                    <div className="text-[11px] font-medium text-white/40">
+                      {m.label}
+                    </div>
+                    <div className="mt-0.5 text-sm font-bold">{m.value}</div>
+                  </div>
+                ))}
+              </div>
             </div>
-            <div className="mb-2 text-xl font-bold text-white">
-              Custom Analytics
+
+            {/* Floating metric cards */}
+            {/* Revenue Growth — right edge, clear of the +2.47% badge */}
+            <div className="animate-float absolute top-1/3 -right-6 z-10 rounded-xl border border-purple-500/20 bg-[#0d0b1e]/90 px-4 py-3 shadow-xl backdrop-blur-md">
+              <div className="text-[11px] font-medium text-white/45">
+                Revenue Growth
+              </div>
+              <div className="mt-0.5 text-base font-bold text-emerald-400">
+                ↑ 12.4%
+              </div>
             </div>
-            <div className="text-md text-slate-300">
-              Build personalized dashboards for your research
+
+            {/* EPS — bottom left, outside the card */}
+            <div className="animate-float-slow absolute -bottom-5 -left-5 z-10 rounded-xl border border-purple-500/20 bg-[#0d0b1e]/90 px-4 py-3 shadow-xl backdrop-blur-md">
+              <div className="text-[11px] font-medium text-white/45">
+                EPS (TTM)
+              </div>
+              <div className="mt-0.5 text-base font-bold">$6.43</div>
+            </div>
+
+            {/* Dividend Yield — top center, above the chart */}
+            <div className="animate-float-mid absolute -top-5 left-1/2 z-10 -translate-x-1/2 rounded-xl border border-purple-500/20 bg-[#0d0b1e]/90 px-4 py-3 shadow-xl backdrop-blur-md">
+              <div className="text-[11px] font-medium text-white/45">
+                Div. Yield
+              </div>
+              <div className="mt-0.5 text-base font-bold text-purple-300">
+                0.51%
+              </div>
             </div>
           </div>
         </div>
       </section>
-      {/* Footer */}
-      <footer className="w-full border-t border-[#23203a]/60 bg-transparent px-4 py-8">
-        <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-4 md:flex-row">
-          <div className="flex items-center gap-3">
-            <span className="rounded-xl bg-[#672eeb] p-2">
-              <svg width="32" height="32" fill="none" viewBox="0 0 32 32">
-                <rect width="32" height="32" rx="12" fill="#672eeb" />
-                <path
-                  d="M10 22V12M16 22V16M22 22V10"
-                  stroke="#fff"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                />
-              </svg>
-            </span>
-            <span className="text-lg font-bold text-white">QuantEdge</span>
+
+      {/* ── Stats band ── */}
+      <div ref={statsReveal.ref} className={revealClass(statsReveal.visible)}>
+        <div className="border-y border-white/[0.05] bg-white/[0.02]">
+          <div className="mx-auto grid max-w-7xl grid-cols-2 md:grid-cols-4">
+            {[
+              { value: '50+', label: 'Financial Metrics' },
+              { value: '20yr', label: 'Historical Data' },
+              { value: '3', label: 'Chart Types' },
+              { value: '100%', label: 'Customizable' },
+            ].map((s, i) => (
+              <div
+                key={s.label}
+                className={`flex flex-col items-center px-6 py-10 ${i > 0 ? 'border-l border-white/[0.05]' : ''}`}
+              >
+                <div className="text-3xl font-extrabold text-purple-400">
+                  {s.value}
+                </div>
+                <div className="mt-1.5 text-sm text-white/45">{s.label}</div>
+              </div>
+            ))}
           </div>
-          <div className="flex flex-col items-center gap-2 md:flex-row md:gap-6">
-            <a
-              href="#"
-              className="text-sm font-medium text-slate-300 transition hover:text-[#8B5CF6]"
+        </div>
+      </div>
+
+      {/* ── Features ── */}
+      <section id="features" className="py-32">
+        <div
+          ref={featuresReveal.ref}
+          className={`mx-auto max-w-7xl px-6 ${revealClass(featuresReveal.visible)}`}
+        >
+          <div className="mb-16 text-center">
+            <div className="mb-3 text-xs font-bold tracking-widest text-purple-400 uppercase">
+              Features
+            </div>
+            <h2 className="text-4xl font-extrabold tracking-tight lg:text-5xl">
+              Everything you need to analyze
+            </h2>
+            <p className="mt-4 text-lg text-white/50">
+              The tools professionals use — now available to everyone.
+            </p>
+          </div>
+
+          <div className="grid gap-6 md:grid-cols-3">
+            {[
+              {
+                icon: (
+                  <svg width="22" height="22" fill="none" viewBox="0 0 24 24">
+                    <path
+                      d="M7 17V9M12 17V13M17 17V7"
+                      stroke="#A855F7"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                    />
+                  </svg>
+                ),
+                title: 'Multiple Chart Types',
+                desc: 'Line, area, and bar charts — each optimized for different financial metrics and time horizons.',
+              },
+              {
+                icon: (
+                  <svg width="22" height="22" fill="none" viewBox="0 0 24 24">
+                    <circle
+                      cx="12"
+                      cy="12"
+                      r="9"
+                      stroke="#A855F7"
+                      strokeWidth="2"
+                    />
+                    <path
+                      d="M12 7v5l3 3"
+                      stroke="#A855F7"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                ),
+                title: 'Historically Accurate',
+                desc: 'Access 20+ years of fundamental data and price history for any publicly traded company.',
+              },
+              {
+                icon: (
+                  <svg width="22" height="22" fill="none" viewBox="0 0 24 24">
+                    <rect
+                      x="3"
+                      y="3"
+                      width="7"
+                      height="7"
+                      rx="1.5"
+                      stroke="#A855F7"
+                      strokeWidth="2"
+                    />
+                    <rect
+                      x="14"
+                      y="3"
+                      width="7"
+                      height="7"
+                      rx="1.5"
+                      stroke="#A855F7"
+                      strokeWidth="2"
+                    />
+                    <rect
+                      x="3"
+                      y="14"
+                      width="7"
+                      height="7"
+                      rx="1.5"
+                      stroke="#A855F7"
+                      strokeWidth="2"
+                    />
+                    <rect
+                      x="14"
+                      y="14"
+                      width="7"
+                      height="7"
+                      rx="1.5"
+                      stroke="#A855F7"
+                      strokeWidth="2"
+                    />
+                  </svg>
+                ),
+                title: 'Custom Dashboards',
+                desc: 'Build personalized analytics workspaces. Choose your tickers, pick your metrics, build your edge.',
+              },
+            ].map((f) => (
+              <div
+                key={f.title}
+                className="group rounded-2xl border border-white/[0.07] bg-white/[0.03] p-8 backdrop-blur-sm transition-all duration-300 hover:border-purple-500/30 hover:bg-white/[0.06] hover:shadow-xl hover:shadow-purple-950/30"
+              >
+                <div className="mb-5 flex h-12 w-12 items-center justify-center rounded-xl bg-purple-500/10 ring-1 ring-purple-500/20 transition group-hover:bg-purple-500/15 group-hover:ring-purple-500/30">
+                  {f.icon}
+                </div>
+                <h3 className="mb-3 text-xl font-bold">{f.title}</h3>
+                <p className="text-base leading-relaxed text-white/52">
+                  {f.desc}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── How it works ── */}
+      <section id="how-it-works" className="py-32">
+        <div
+          ref={howReveal.ref}
+          className={`mx-auto max-w-7xl px-6 ${revealClass(howReveal.visible)}`}
+        >
+          <div className="mb-16 text-center">
+            <div className="mb-3 text-xs font-bold tracking-widest text-purple-400 uppercase">
+              How it works
+            </div>
+            <h2 className="text-4xl font-extrabold tracking-tight lg:text-5xl">
+              From ticker to insight in seconds
+            </h2>
+          </div>
+
+          <div className="grid gap-12 md:grid-cols-3">
+            {[
+              {
+                step: '01',
+                title: 'Choose a ticker',
+                desc: 'Search for any publicly traded company and pull up its full financial profile instantly.',
+              },
+              {
+                step: '02',
+                title: 'Select your metrics',
+                desc: 'Pick from 50+ fundamental and technical metrics. Mix and match for deep, custom analysis.',
+              },
+              {
+                step: '03',
+                title: 'Visualize & analyze',
+                desc: 'Render interactive charts instantly. Build your investment thesis on real data.',
+              },
+            ].map((item) => (
+              <div key={item.step} className="relative pl-2">
+                <div className="mb-3 text-7xl leading-none font-black text-white/[0.05]">
+                  {item.step}
+                </div>
+                <h3 className="mb-3 text-xl font-bold">{item.title}</h3>
+                <p className="text-base leading-relaxed text-white/52">
+                  {item.desc}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── CTA ── */}
+      <section className="py-32">
+        <div
+          ref={ctaReveal.ref}
+          className={`mx-auto max-w-3xl px-6 text-center ${revealClass(ctaReveal.visible)}`}
+        >
+          <div className="rounded-3xl border border-purple-500/20 bg-gradient-to-b from-purple-900/25 to-transparent p-16 shadow-2xl shadow-purple-950/30 backdrop-blur-sm">
+            <h2 className="mb-4 text-4xl font-extrabold tracking-tight lg:text-5xl">
+              Ready to find your edge?
+            </h2>
+            <p className="mb-10 text-lg leading-relaxed text-white/52">
+              Join thousands of investors using QuantEdge to make smarter,
+              data-driven decisions.
+            </p>
+            <button
+              onClick={() => navigate('/charting')}
+              className="group rounded-xl bg-purple-600 px-10 py-4 text-lg font-semibold text-white shadow-lg shadow-purple-900/40 transition hover:bg-purple-500 hover:shadow-purple-800/50"
             >
+              Start for free
+              <span className="ml-2 inline-block transition-transform group-hover:translate-x-0.5">
+                →
+              </span>
+            </button>
+          </div>
+        </div>
+      </section>
+
+      {/* ── Footer ── */}
+      <footer className="border-t border-white/[0.05] py-12">
+        <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-6 px-6 md:flex-row">
+          <img
+            src="/quantedge-logo.svg"
+            alt="QuantEdge"
+            className="h-6 w-auto opacity-80"
+          />
+
+          <div className="flex gap-6 text-sm text-white/40">
+            <Link to="/contact-us" className="transition hover:text-white">
               Feedback
-            </a>
-            <span className="text-sm text-slate-400">
-              © 2026 QuantEdge. All rights reserved.
-            </span>
+            </Link>
+          </div>
+
+          <div className="text-sm text-white/30">
+            © 2026 QuantEdge. All rights reserved.
           </div>
         </div>
       </footer>

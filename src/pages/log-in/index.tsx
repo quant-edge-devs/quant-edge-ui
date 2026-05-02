@@ -5,15 +5,14 @@ import { Link, useNavigate } from 'react-router';
 import { useState } from 'react';
 
 const GoogleIcon = () => (
-  <svg className="mr-2 h-6 w-6" viewBox="0 0 24 24">
-    <g>
-      <path
-        fill="#fff"
-        d="M21.35 11.1h-9.18v2.98h5.24c-.23 1.22-1.39 3.58-5.24 3.58-3.15 0-5.72-2.61-5.72-5.83s2.57-5.83 5.72-5.83c1.8 0 3.01.77 3.7 1.43l2.53-2.46C17.02 4.6 15.13 3.5 12.17 3.5 6.97 3.5 2.83 7.64 2.83 12.84s4.14 9.34 9.34 9.34c5.39 0 8.96-3.79 8.96-9.13 0-.62-.07-1.23-.18-1.85z"
-      />
-    </g>
+  <svg className="mr-2 h-4 w-4" viewBox="0 0 24 24">
+    <path
+      fill="currentColor"
+      d="M21.35 11.1h-9.18v2.98h5.24c-.23 1.22-1.39 3.58-5.24 3.58-3.15 0-5.72-2.61-5.72-5.83s2.57-5.83 5.72-5.83c1.8 0 3.01.77 3.7 1.43l2.53-2.46C17.02 4.6 15.13 3.5 12.17 3.5 6.97 3.5 2.83 7.64 2.83 12.84s4.14 9.34 9.34 9.34c5.39 0 8.96-3.79 8.96-9.13 0-.62-.07-1.23-.18-1.85z"
+    />
   </svg>
 );
+
 
 export const Login = () => {
   const { loginWithGoogle, login, logout, currentUser } = useAuth();
@@ -22,161 +21,127 @@ export const Login = () => {
   const [loading, setLoading] = useState(false);
 
   return (
-    <div className="flex min-h-screen">
-      {/* Left: Sign in form */}
-      <div className="flex w-full flex-col justify-center bg-[#0e1020] px-12 py-16 text-white md:w-1/2">
-        <Link
-          to="/"
-          className="mb-8 flex items-center gap-3 text-2xl font-bold"
-        >
-          <span className="rounded-xl bg-[#672eeb] p-3">
-            {/* Placeholder for logo icon */}
-            <svg width="32" height="32" fill="none" viewBox="0 0 32 32">
-              <rect width="32" height="32" rx="12" fill="#672eeb" />
-              <path
-                d="M10 22V12M16 22V16M22 22V10"
-                stroke="#fff"
-                strokeWidth="2"
-                strokeLinecap="round"
-              />
-            </svg>
-          </span>
-          QuantEdge
+    <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-[#06050f] px-4">
+      {/* Ambient orbs */}
+      <div className="pointer-events-none fixed inset-0 overflow-hidden">
+        <div className="absolute -top-40 -left-40 h-[600px] w-[600px] rounded-full bg-purple-600/10 blur-[120px]" />
+        <div className="absolute -bottom-32 -right-32 h-[500px] w-[500px] rounded-full bg-indigo-600/8 blur-[100px]" />
+      </div>
+
+      {/* Card */}
+      <div className="relative z-10 w-full max-w-sm animate-fade-up">
+        {/* Logo */}
+        <Link to="/" className="mb-8 block">
+          <img src="/quantedge-logo.svg" alt="QuantEdge" className="h-8 w-auto" />
         </Link>
-        <h2 className="mb-2 text-3xl font-bold">Welcome back</h2>
-        <p className="mb-8 text-lg text-slate-300">
-          Sign in to access your analytics dashboard
-        </p>
-        {currentUser ? (
-          <div className="flex w-full flex-col items-center gap-6">
-            <div className="mb-4 text-lg font-semibold text-white">
-              Welcome, {currentUser.displayName || currentUser.email || 'User'}!
+
+        <div className="rounded-2xl border border-white/[0.07] bg-white/[0.03] p-8 backdrop-blur-sm">
+          <h1 className="mb-1 text-2xl font-semibold text-white">Welcome back</h1>
+          <p className="mb-7 text-sm text-white/45">Sign in to access your dashboard</p>
+
+          {currentUser ? (
+            <div className="flex flex-col gap-4">
+              <p className="text-sm text-white/70">
+                Signed in as <span className="text-white">{currentUser.displayName || currentUser.email}</span>
+              </p>
+              <Button
+                type="button"
+                className="w-full cursor-pointer rounded-xl bg-purple-600 py-2.5 text-sm font-semibold text-white transition hover:bg-purple-500"
+                onClick={logout}
+              >
+                Sign out
+              </Button>
             </div>
-            <Button
-              type="button"
-              className="flex w-full cursor-pointer items-center justify-center rounded-lg bg-gradient-to-r from-fuchsia-600 to-fuchsia-800 py-3 text-lg font-semibold text-white shadow transition hover:from-fuchsia-700 hover:to-fuchsia-900"
-              onClick={logout}
+          ) : (
+            <Formik
+              initialValues={{ email: '', password: '', remember: false }}
+              onSubmit={async (values, { setSubmitting }) => {
+                setError(null);
+                setLoading(true);
+                try {
+                  await login(values.email, values.password);
+                  setLoading(false);
+                  navigate('/charting/custom');
+                } catch (err: any) {
+                  setError(err.message || 'Failed to sign in');
+                  setLoading(false);
+                  setSubmitting(false);
+                }
+              }}
             >
-              Sign out
-            </Button>
-          </div>
-        ) : (
-          <Formik
-            initialValues={{ email: '', password: '', remember: false }}
-            onSubmit={async (values, { setSubmitting }) => {
-              setError(null);
-              setLoading(true);
-              try {
-                await login(values.email, values.password);
-                setLoading(false);
-                navigate('/charting/custom');
-              } catch (err: any) {
-                setError(err.message || 'Failed to sign in');
-                setLoading(false);
-                setSubmitting(false);
-              }
-            }}
-          >
-            {() => (
-              <Form className="flex w-full flex-col gap-4">
-                {error && (
-                  <div className="mb-2 rounded bg-red-600/80 px-4 py-2 text-sm text-white">
-                    {error}
-                  </div>
-                )}
-                <label className="text-sm font-semibold" htmlFor="email">
-                  Email
-                </label>
-                <Field
-                  id="email"
-                  name="email"
-                  type="email"
-                  placeholder="you@example.com"
-                  className="mb-2 w-full rounded-lg border border-slate-700 bg-[#181a2a] px-4 py-3 text-white focus:outline-none"
-                />
-                <label className="text-sm font-semibold" htmlFor="password">
-                  Password
-                </label>
-                <div className="relative mb-2">
-                  <Field
-                    id="password"
-                    name="password"
-                    type="password"
-                    placeholder="••••••••"
-                    className="w-full rounded-lg border border-slate-700 bg-[#181a2a] px-4 py-3 text-white focus:outline-none"
-                  />
-                  {/* Eye icon for show/hide password could go here */}
-                </div>
-                <div className="mb-2 flex items-center justify-between">
-                  <label className="flex items-center gap-2 text-sm">
+              {() => (
+                <Form className="flex flex-col gap-4">
+                  {error && (
+                    <div className="rounded-lg border border-red-500/20 bg-red-500/10 px-3 py-2 text-xs text-red-400">
+                      {error}
+                    </div>
+                  )}
+
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-xs font-medium text-white/60" htmlFor="email">Email</label>
                     <Field
-                      type="checkbox"
-                      name="remember"
-                      className="accent-fuchsia-600"
+                      id="email"
+                      name="email"
+                      type="email"
+                      placeholder="you@example.com"
+                      className="w-full rounded-xl border border-white/[0.08] bg-white/[0.04] px-3.5 py-2.5 text-sm text-white placeholder-white/20 transition focus:border-purple-500/50 focus:bg-white/[0.06] focus:outline-none"
                     />
+                  </div>
+
+                  <div className="flex flex-col gap-1.5">
+                    <div className="flex items-center justify-between">
+                      <label className="text-xs font-medium text-white/60" htmlFor="password">Password</label>
+                      <Link to="/auth/recover" className="text-xs text-purple-400 hover:text-purple-300">
+                        Forgot password?
+                      </Link>
+                    </div>
+                    <Field
+                      id="password"
+                      name="password"
+                      type="password"
+                      placeholder="••••••••"
+                      className="w-full rounded-xl border border-white/[0.08] bg-white/[0.04] px-3.5 py-2.5 text-sm text-white placeholder-white/20 transition focus:border-purple-500/50 focus:bg-white/[0.06] focus:outline-none"
+                    />
+                  </div>
+
+                  <label className="flex items-center gap-2 text-xs text-white/50 cursor-pointer">
+                    <Field type="checkbox" name="remember" className="accent-purple-600" />
                     Remember me
                   </label>
-                  <Link
-                    to="/auth/recover"
-                    className="text-sm text-[#672eeb] hover:underline"
+
+                  <Button
+                    type="submit"
+                    disabled={loading}
+                    className="mt-1 w-full cursor-pointer rounded-xl bg-purple-600 py-2.5 text-sm font-semibold text-white shadow-lg shadow-purple-900/30 transition hover:bg-purple-500 disabled:opacity-60"
                   >
-                    Forgot password?
-                  </Link>
-                </div>
-                <Button
-                  type="submit"
-                  className="mt-2 mb-2 flex w-full cursor-pointer items-center justify-center rounded-lg bg-[#672eeb] py-3 text-lg font-semibold text-white shadow transition hover:bg-[#353967]"
-                  disabled={loading}
-                >
-                  {loading ? 'Signing In...' : 'Sign In'}
-                </Button>
-                <div className="my-2 flex items-center justify-center gap-2 text-slate-400">
-                  <span className="h-px w-16 bg-slate-700" />
-                  <span className="text-sm">or continue with</span>
-                  <span className="h-px w-16 bg-slate-700" />
-                </div>
-                <div className="flex items-center justify-center">
+                    {loading ? 'Signing in…' : 'Sign in'}
+                  </Button>
+
+                  <div className="flex items-center gap-3 text-white/20">
+                    <span className="h-px flex-1 bg-white/[0.06]" />
+                    <span className="text-xs">or</span>
+                    <span className="h-px flex-1 bg-white/[0.06]" />
+                  </div>
+
                   <Button
                     type="button"
-                    className="flex w-1/2 items-center justify-center rounded-lg border border-slate-600 bg-[#181a2a] py-3 text-white hover:bg-[#231133]"
+                    className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl border border-white/[0.08] bg-white/[0.03] py-2.5 text-sm text-white/70 transition hover:bg-white/[0.06] hover:text-white"
                     onClick={loginWithGoogle}
                   >
-                    <GoogleIcon /> Google
+                    <GoogleIcon />
+                    Continue with Google
                   </Button>
-                </div>
-                <div className="mt-6 text-center text-sm text-slate-400">
-                  Don't have an account?{' '}
-                  <Link
-                    to="/auth/sign-up"
-                    className="text-[#672eeb] hover:underline"
-                  >
-                    Sign up
-                  </Link>
-                </div>
-              </Form>
-            )}
-          </Formik>
-        )}
-      </div>
-      {/* Right: Marketing panel */}
-      <div className="hidden w-1/2 flex-col items-center justify-center bg-gradient-to-br from-[#6d28d9] to-[#0e1020] p-16 text-white md:flex">
-        <div className="flex flex-col items-center justify-center">
-          <span className="mb-8 rounded-2xl bg-[#672eeb] p-8">
-            <svg width="64" height="64" fill="none" viewBox="0 0 32 32">
-              <rect width="32" height="32" rx="12" fill="#672eeb" />
-              <path
-                d="M10 22V12M16 22V16M22 22V10"
-                stroke="#fff"
-                strokeWidth="2"
-                strokeLinecap="round"
-              />
-            </svg>
-          </span>
-          <h2 className="mb-4 text-3xl font-bold">Start analyzing today</h2>
-          <p className="max-w-xs text-center text-lg text-slate-200">
-            Access powerful financial analytics tools used by institutional
-            investors worldwide.
-          </p>
+
+                  <p className="text-center text-xs text-white/35">
+                    Don't have an account?{' '}
+                    <Link to="/auth/sign-up" className="text-purple-400 hover:text-purple-300">
+                      Sign up
+                    </Link>
+                  </p>
+                </Form>
+              )}
+            </Formik>
+          )}
         </div>
       </div>
     </div>

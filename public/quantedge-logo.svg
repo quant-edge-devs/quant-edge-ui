@@ -1,0 +1,20 @@
+<svg width="300" height="64" viewBox="0 0 300 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="gFP" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#e879f9"></stop>
+      <stop offset="100%" stop-color="#c084fc"></stop>
+    </linearGradient>
+    <linearGradient id="gFPd" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#e879f9"></stop>
+      <stop offset="100%" stop-color="#a855f7"></stop>
+    </linearGradient>
+  </defs>
+
+  <polygon points="32,4 54,16 54,48 32,60 10,48 10,16" stroke="url(#gFP)" stroke-width="2.5" fill="url(#gFPd)" fill-opacity="0.1"></polygon>
+
+  <polyline points="20,42 32,22 44,42" stroke="url(#gFP)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none"></polyline>
+  <line x1="26" y1="36" x2="38" y2="36" stroke="url(#gFP)" stroke-width="2.5" stroke-linecap="round"></line>
+
+  <text x="72" y="43" font-family="Inter, -apple-system, BlinkMacSystemFont, sans-serif" font-weight="800" font-size="27" fill="white" letter-spacing="-1">QUANT</text>
+  <text x="182" y="43" font-family="Inter, -apple-system, BlinkMacSystemFont, sans-serif" font-weight="300" font-size="27" fill="url(#gFP)" letter-spacing="2">EDGE</text>
+</svg>

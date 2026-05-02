@@ -3,7 +3,6 @@ import { MobileNavbar } from './Mobile';
 
 export const links = [
   { to: '/contact-us', label: 'Contact us' },
-  { to: '/about', label: 'About' },
   { to: '/tutorial', label: 'Tutorial' },
   { to: '/pricing', label: 'Pricing' },
   { to: '/auth/log-in', label: 'Log in' },

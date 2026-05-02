@@ -1,10 +1,10 @@
+@import 'tailwindcss';
+
 *,
 *::before,
 *::after {
   box-sizing: border-box;
 }
-
-@import 'tailwindcss';
 
 :root {
   --color-mint-gray: #e0e2e1;
@@ -30,17 +30,69 @@ body {
 }
 
 @layer utilities {
+  /* ── Hero entrance ── */
+  @keyframes fade-up {
+    0%   { opacity: 0; transform: translateY(32px); }
+    100% { opacity: 1; transform: translateY(0); }
+  }
+  .animate-fade-up {
+    animation: fade-up 0.85s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+  .animate-fade-up-delay {
+    animation: fade-up 0.85s 0.18s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+
+  /* ── Legacy float-in (kept for other pages) ── */
   @keyframes float-in {
-    0% {
-      opacity: 0;
-      transform: translateY(40px);
-    }
-    100% {
-      opacity: 1;
-      transform: translateY(0);
-    }
+    0%   { opacity: 0; transform: translateY(40px); }
+    100% { opacity: 1; transform: translateY(0); }
   }
   .animate-float-in {
     animation: float-in 1s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+
+  /* ── Floating metric cards ── */
+  @keyframes float {
+    0%, 100% { transform: translateY(0px); }
+    50%       { transform: translateY(-10px); }
+  }
+  @keyframes float-slow {
+    0%, 100% { transform: translateY(0px); }
+    50%       { transform: translateY(-8px); }
+  }
+  .animate-float {
+    animation: float 3.5s ease-in-out infinite;
+  }
+  .animate-float-slow {
+    animation: float-slow 4.5s 1.2s ease-in-out infinite;
+  }
+  .animate-float-mid {
+    animation: float 4s 0.6s ease-in-out infinite;
+  }
+
+  /* ── SVG chart line draw (uses pathLength="1") ── */
+  @keyframes chart-draw {
+    from { stroke-dashoffset: 1; }
+    to   { stroke-dashoffset: 0; }
+  }
+  .chart-draw {
+    stroke-dasharray: 1;
+    stroke-dashoffset: 1;
+    animation: chart-draw 2.2s 0.6s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  }
+
+  /* ── Ambient orb slow pulse ── */
+  @keyframes orb-pulse {
+    0%, 100% { opacity: 0.18; transform: scale(1); }
+    50%       { opacity: 0.28; transform: scale(1.08); }
+  }
+  .animate-orb {
+    animation: orb-pulse 8s ease-in-out infinite;
+  }
+  .animate-orb-delay {
+    animation: orb-pulse 10s 3s ease-in-out infinite;
+  }
+  .animate-orb-slow {
+    animation: orb-pulse 12s 6s ease-in-out infinite;
   }
 }

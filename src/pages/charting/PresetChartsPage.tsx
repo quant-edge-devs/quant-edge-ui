@@ -1,357 +1,221 @@
 import { useState, useMemo } from 'react';
-import { FaSearch, FaPlus } from 'react-icons/fa';
-import { Link, useNavigate } from 'react-router';
 import LineChart from './chart-types/LineChart';
 import BarChart from './chart-types/BarChart';
 import { getDateRange } from './getDateRange';
+import { ChartingNavbar } from '../../components/navbar/ChartingNavbar';
 
-// Charting controls config
 const METRICS = [
-  {
-    label: 'Price To Sales Ratio',
-    sub: 'Company valuation vs. revenue',
-    icon: (
-      <svg width="20" height="20" fill="none" viewBox="0 0 20 20">
-        <rect width="20" height="20" rx="6" fill="#672eeb" />
-        <path
-          d="M6 14V8M10 14V11M14 14V6"
-          stroke="#fff"
-          strokeWidth="1.5"
-          strokeLinecap="round"
-        />
-      </svg>
-    ),
-  },
-  {
-    label: 'Price To Earnings Ratio',
-    sub: 'Valuation vs. earnings',
-    icon: (
-      <svg width="20" height="20" fill="none" viewBox="0 0 20 20">
-        <rect width="20" height="20" rx="6" fill="#672eeb" />
-        <circle cx="10" cy="10" r="5" stroke="#fff" strokeWidth="1.5" />
-      </svg>
-    ),
-  },
-  {
-    label: 'Market Cap',
-    sub: 'Total company value',
-    icon: (
-      <svg width="20" height="20" fill="none" viewBox="0 0 20 20">
-        <rect width="20" height="20" rx="6" fill="#672eeb" />
-        <rect x="5" y="10" width="10" height="5" rx="2" fill="#fff" />
-      </svg>
-    ),
-  },
-  {
-    label: 'Dividend Yield (%)',
-    sub: 'Annual dividend as % of price',
-    icon: (
-      <svg width="20" height="20" fill="none" viewBox="0 0 20 20">
-        <rect width="20" height="20" rx="6" fill="#672eeb" />
-        <path
-          d="M10 5v10M5 10h10"
-          stroke="#fff"
-          strokeWidth="1.5"
-          strokeLinecap="round"
-        />
-      </svg>
-    ),
-  },
-  {
-    label: 'Earnings Per Share',
-    sub: 'Profit per share',
-    icon: (
-      <svg width="20" height="20" fill="none" viewBox="0 0 20 20">
-        <rect width="20" height="20" rx="6" fill="#672eeb" />
-        <rect x="7" y="7" width="6" height="6" rx="2" fill="#fff" />
-      </svg>
-    ),
-  },
-  {
-    label: 'Revenues',
-    sub: 'Total company revenue',
-    icon: (
-      <svg width="20" height="20" fill="none" viewBox="0 0 20 20">
-        <rect width="20" height="20" rx="6" fill="#672eeb" />
-        <rect x="5" y="12" width="10" height="3" rx="1.5" fill="#fff" />
-      </svg>
-    ),
-  },
-  {
-    label: 'Net Income',
-    sub: 'Total company profit',
-    icon: (
-      <svg width="20" height="20" fill="none" viewBox="0 0 20 20">
-        <rect width="20" height="20" rx="6" fill="#672eeb" />
-        <rect x="5" y="5" width="10" height="10" rx="3" fill="#fff" />
-      </svg>
-    ),
-  },
+  { label: 'Price To Sales Ratio',   sub: 'Valuation vs. revenue'         },
+  { label: 'Price To Earnings Ratio', sub: 'Valuation vs. earnings'        },
+  { label: 'Market Cap',              sub: 'Total company value'            },
+  { label: 'Dividend Yield (%)',      sub: 'Annual dividend as % of price'  },
+  { label: 'Earnings Per Share',      sub: 'Profit per share'               },
+  { label: 'Revenues',               sub: 'Total company revenue'          },
+  { label: 'Net Income',             sub: 'Total company profit'           },
 ];
 
-const CHART_TYPES = ['Bar Chart', 'Line Chart'];
-const TIMEFRAMES = ['1Y', '3Y', '5Y', '10Y'];
+const CHART_TYPES = ['Bar Chart', 'Line Chart'] as const;
+const TIMEFRAMES  = ['1Y', '3Y', '5Y', '10Y'] as const;
 
-// Main charting page (unified design)
 export const PresetChartsPage = () => {
-  const [tickerInput, setTickerInput] = useState('');
-  const [ticker, setTicker] = useState('');
-  const [selectedMetric, setSelectedMetric] = useState(METRICS[0].label);
-  const [selectedChartType, setSelectedChartType] = useState(CHART_TYPES[0]);
-  const [selectedTimeframe, setSelectedTimeframe] = useState(TIMEFRAMES[0]);
+  const [tickerInput, setTickerInput]   = useState('');
+  const [ticker, setTicker]             = useState('');
+  const [selectedMetric, setSelectedMetric]         = useState(METRICS[0].label);
+  const [selectedChartType, setSelectedChartType]   = useState<string>(CHART_TYPES[0]);
+  const [selectedTimeframe, setSelectedTimeframe]   = useState<string>(TIMEFRAMES[0]);
   const [loading, setLoading] = useState(false);
-  const navigate = useNavigate();
 
-  // Map timeframe to date range
   const { startDate, endDate } = getDateRange(selectedTimeframe);
-  const metric = selectedMetric;
-
-  // Memoize tickers array to avoid unnecessary re-renders
   const tickers = useMemo(() => (ticker ? [ticker] : []), [ticker]);
+  const aggregateByYear = selectedTimeframe !== '1Y';
 
-  // Chart rendering logic
-  // Determine if we should aggregate by year (for multi-year timeframes)
-  const aggregateByYear = ['3Y', '5Y', '10Y'].includes(selectedTimeframe);
-  let chartArea = null;
-  if (ticker) {
-    if (selectedChartType === 'Line Chart') {
-      chartArea = (
-        <LineChart
-          tickers={tickers}
-          metric={metric}
-          startDate={startDate}
-          endDate={endDate}
-          setLoading={setLoading}
-          interval={aggregateByYear ? 'annual' : 'quarter'}
-        />
-      );
-    } else if (selectedChartType === 'Bar Chart') {
-      chartArea = (
-        <BarChart
-          tickers={tickers}
-          metric={metric}
-          startDate={startDate}
-          endDate={endDate}
-          setLoading={setLoading}
-          interval={aggregateByYear ? 'annual' : 'quarter'}
-        />
-      );
-    }
-  }
-
-  // Handle search submit
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    setTicker(tickerInput.trim().toUpperCase());
+    const t = tickerInput.trim().toUpperCase();
+    if (t) setTicker(t);
   };
 
+  const activeMetric = METRICS.find((m) => m.label === selectedMetric);
+
+  const chartArea = useMemo(() => {
+    if (!ticker) return null;
+    const shared = {
+      tickers,
+      metric: selectedMetric,
+      startDate,
+      endDate,
+      setLoading,
+      interval: aggregateByYear ? ('annual' as const) : ('quarter' as const),
+    };
+    if (selectedChartType === 'Line Chart') return <LineChart {...shared} />;
+    return <BarChart {...shared} />;
+  }, [ticker, selectedMetric, selectedChartType, startDate, endDate, aggregateByYear, tickers]);
+
   return (
-    <div className="font-inter flex min-h-screen bg-[radial-gradient(ellipse_at_center,_#1E1B4B_30%,_#0F172A_100%)] text-white">
-      <div className="flex flex-1 flex-col">
-        {/* Navbar */}
-        <header className="flex items-center justify-between px-12 py-6">
-          <div className="flex items-center gap-4">
-            <Link to="/" className="flex items-center gap-4">
-              <span className="rounded-xl bg-[#672eeb] p-2">
-                <svg width="40" height="40" fill="none" viewBox="0 0 32 32">
-                  <rect width="32" height="32" rx="12" fill="#672eeb" />
-                  <path
-                    d="M10 22V12M16 22V16M22 22V10"
-                    stroke="#fff"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                  />
-                </svg>
-              </span>
-              <span className="ml-2 text-3xl font-bold text-white">
-                QuantEdge
-              </span>
-            </Link>
-          </div>
-          <nav className="flex items-center gap-6">
-            <Link
-              to="/contact-us"
-              className="text-lg font-medium text-white transition hover:text-[#672eeb]"
-            >
-              Feedback
-            </Link>
-          </nav>
-        </header>
-        {/* Main content */}
-        <main className="animate-float-in mx-auto flex w-full max-w-7xl flex-col items-center px-4 pt-8 pb-16">
-          <div className="mb-8 flex w-full items-center justify-between">
-            <div>
-              <h1 className="mb-2 text-4xl font-extrabold text-white">
-                Preset Charts
-              </h1>
-              <div className="text-lg text-slate-300">
-                Search a ticker and configure your visualization
-              </div>
+    <div className="flex min-h-screen flex-col bg-[#06050f] text-white">
+      {/* Ambient orbs */}
+      <div className="pointer-events-none fixed inset-0 overflow-hidden">
+        <div className="absolute -top-48 -left-48 h-[600px] w-[600px] rounded-full bg-purple-700/15 blur-[140px]" />
+        <div className="absolute top-1/2 -right-32 h-[400px] w-[400px] rounded-full bg-violet-600/10 blur-[120px]" />
+      </div>
+
+      <ChartingNavbar activeMode="preset" />
+
+      <main className="relative mx-auto flex w-full max-w-7xl flex-1 flex-col gap-6 px-6 py-8">
+
+        {/* Page header */}
+        <div>
+          <h1 className="text-3xl font-extrabold tracking-tight">Preset Charts</h1>
+          <p className="mt-1 text-sm text-white/45">
+            Search any public ticker, pick a metric and time period, and visualize instantly.
+          </p>
+        </div>
+
+        {/* Controls card */}
+        <div className="rounded-2xl border border-white/[0.07] bg-white/[0.03] p-6 backdrop-blur-sm">
+
+          {/* Row 1: Ticker search */}
+          <form onSubmit={handleSearch} className="mb-6">
+            <label className="mb-2 block text-xs font-semibold uppercase tracking-widest text-white/40">
+              Stock Ticker
+            </label>
+            <div className="flex gap-2">
+              <input
+                className="flex-1 rounded-xl border border-white/[0.08] bg-white/[0.04] px-4 py-2.5 text-sm text-white placeholder-white/25 transition focus:border-purple-500/50 focus:bg-white/[0.07] focus:outline-none focus:ring-1 focus:ring-purple-500/30"
+                placeholder="e.g. AAPL, TSLA, MSFT"
+                value={tickerInput}
+                onChange={(e) => setTickerInput(e.target.value)}
+              />
+              <button
+                type="submit"
+                className="rounded-xl bg-purple-600 px-5 py-2.5 text-sm font-semibold text-white shadow shadow-purple-900/40 transition hover:bg-purple-500"
+              >
+                Search
+              </button>
             </div>
-            <button
-              className="flex items-center gap-2 rounded-lg bg-[#672eeb] px-5 py-2 text-lg font-semibold text-white shadow transition hover:bg-[#672eeb]"
-              onClick={() => navigate('/charting/custom')}
-            >
-              <FaPlus /> Add Custom Chart
-            </button>
-          </div>
-          {/* Card/Panel */}
-          <div className="mb-10 rounded-2xl border border-[#23203a]/60 bg-[#181a2a] p-10 shadow-lg">
-            {/* Ticker Search */}
-            <form className="mb-6" onSubmit={handleSearch}>
-              <label className="mb-2 block text-lg font-semibold text-white">
-                Stock Ticker
-              </label>
-              <div className="relative flex gap-2">
-                <input
-                  className="w-full rounded-lg border border-[#23203a]/60 bg-[#23203a] py-3 pr-4 pl-12 text-white placeholder-slate-400 focus:ring-2 focus:ring-[#672eeb] focus:outline-none"
-                  placeholder="Search ticker (e.g., AAPL)"
-                  value={tickerInput}
-                  onChange={(e) => setTickerInput(e.target.value)}
-                />
+            {ticker && (
+              <div className="mt-2 flex items-center gap-2 text-xs text-white/40">
+                Showing:
+                <span className="rounded-md bg-purple-500/15 px-2 py-0.5 text-xs font-semibold text-purple-300 ring-1 ring-purple-500/20">
+                  {ticker}
+                </span>
                 <button
-                  type="submit"
-                  className="absolute top-1/2 right-2 flex -translate-y-1/2 items-center gap-2 rounded-lg bg-[#672eeb] px-4 py-2 text-lg font-semibold text-white shadow transition hover:bg-[#672eeb]"
+                  type="button"
+                  className="text-white/30 transition hover:text-white/60"
+                  onClick={() => { setTicker(''); setTickerInput(''); }}
                 >
-                  <FaSearch /> Search
+                  ✕ clear
                 </button>
-                <FaSearch className="pointer-events-none absolute top-1/2 left-4 -translate-y-1/2 text-[#672eeb]" />
               </div>
-            </form>
-            {/* Metric Selection */}
-            <div className="mb-6">
-              <label className="mb-2 block text-lg font-semibold text-white">
-                Select Metric
+            )}
+          </form>
+
+          {/* Row 2: Metric selection */}
+          <div className="mb-6">
+            <label className="mb-2 block text-xs font-semibold uppercase tracking-widest text-white/40">
+              Metric
+            </label>
+            <div className="flex flex-wrap gap-2">
+              {METRICS.map((m) => (
+                <button
+                  key={m.label}
+                  onClick={() => setSelectedMetric(m.label)}
+                  className={`rounded-lg px-4 py-2 text-sm font-medium transition ${
+                    selectedMetric === m.label
+                      ? 'bg-purple-600 text-white shadow shadow-purple-900/30'
+                      : 'border border-white/[0.07] bg-white/[0.03] text-white/60 hover:border-purple-500/30 hover:bg-white/[0.07] hover:text-white'
+                  }`}
+                >
+                  {m.label}
+                </button>
+              ))}
+            </div>
+            {activeMetric && (
+              <p className="mt-2 text-xs text-white/35">{activeMetric.sub}</p>
+            )}
+          </div>
+
+          {/* Row 3: Chart type + Timeframe */}
+          <div className="flex flex-wrap items-start gap-8">
+            <div>
+              <label className="mb-2 block text-xs font-semibold uppercase tracking-widest text-white/40">
+                Chart Type
               </label>
-              <div className="flex flex-wrap gap-4">
-                {METRICS.map((m) => (
+              <div className="flex gap-2">
+                {CHART_TYPES.map((type) => (
                   <button
-                    key={m.label}
-                    className={`flex max-w-xs min-w-[200px] flex-col items-start gap-2 rounded-xl border px-6 py-4 text-left break-words whitespace-normal transition ${
-                      selectedMetric === m.label
-                        ? 'border-[#672eeb] bg-[#2d1e4a]'
-                        : 'border-[#23203a]/60 bg-[#23203a] hover:bg-[#2d1e4a]/80'
+                    key={type}
+                    onClick={() => setSelectedChartType(type)}
+                    className={`rounded-lg px-4 py-2 text-sm font-semibold transition ${
+                      selectedChartType === type
+                        ? 'bg-purple-600 text-white shadow shadow-purple-900/30'
+                        : 'border border-white/[0.07] bg-white/[0.03] text-white/60 hover:border-purple-500/30 hover:bg-white/[0.07] hover:text-white'
                     }`}
-                    onClick={() => setSelectedMetric(m.label)}
                   >
-                    <span className="mb-1 flex items-center gap-2 text-lg font-bold break-words whitespace-normal text-white">
-                      {m.icon} {m.label}
-                    </span>
-                    <span className="text-xs leading-tight break-words whitespace-normal text-purple-200">
-                      {m.sub}
-                    </span>
+                    {type}
                   </button>
                 ))}
               </div>
             </div>
-            {/* Chart Type & Timeframe */}
-            <div className="flex flex-wrap items-center gap-6">
-              <div>
-                <div className="mb-2 text-lg font-semibold text-white">
-                  Chart Type
-                </div>
-                <div className="flex gap-2">
-                  {CHART_TYPES.map((type) => (
-                    <button
-                      key={type}
-                      className={`rounded-lg px-6 py-2 font-semibold transition ${
-                        selectedChartType === type
-                          ? 'bg-[#672eeb] text-white'
-                          : 'bg-[#23203a] text-slate-300 hover:bg-[#2d1e4a]/80'
-                      }`}
-                      onClick={() => setSelectedChartType(type)}
-                    >
-                      {type}
-                    </button>
-                  ))}
-                </div>
-              </div>
-              <div>
-                <div className="mb-2 text-lg font-semibold text-white">
-                  Timeframe
-                </div>
-                <div className="flex gap-2">
-                  {TIMEFRAMES.map((tf) => (
-                    <button
-                      key={tf}
-                      className={`rounded-lg px-6 py-2 font-semibold transition ${
-                        selectedTimeframe === tf
-                          ? 'bg-[#672eeb] text-white'
-                          : 'bg-[#23203a] text-slate-300 hover:bg-[#2d1e4a]/80'
-                      }`}
-                      onClick={() => setSelectedTimeframe(tf)}
-                    >
-                      {tf}
-                    </button>
-                  ))}
-                </div>
+
+            <div>
+              <label className="mb-2 block text-xs font-semibold uppercase tracking-widest text-white/40">
+                Time Period
+              </label>
+              <div className="flex gap-2">
+                {TIMEFRAMES.map((tf) => (
+                  <button
+                    key={tf}
+                    onClick={() => setSelectedTimeframe(tf)}
+                    className={`rounded-lg px-4 py-2 text-sm font-semibold transition ${
+                      selectedTimeframe === tf
+                        ? 'bg-purple-600 text-white shadow shadow-purple-900/30'
+                        : 'border border-white/[0.07] bg-white/[0.03] text-white/60 hover:border-purple-500/30 hover:bg-white/[0.07] hover:text-white'
+                    }`}
+                  >
+                    {tf}
+                  </button>
+                ))}
               </div>
             </div>
           </div>
-          {/* Chart Area */}
-          <div className="relative flex min-h-[800px] w-full flex-1 flex-col items-center justify-center rounded-2xl border-2 border-dashed border-[#672eeb]/40 bg-[#181a2a] p-4">
-            {loading && (
-              <div className="absolute inset-0 z-10 flex items-center justify-center rounded-2xl bg-black/40">
-                <div className="animate-pulse rounded-lg border border-[#23203a]/60 bg-[#181a2a] px-8 py-6 text-xl font-semibold text-white shadow-lg">
-                  Loading chart...
-                </div>
+        </div>
+
+        {/* Chart area */}
+        <div className="relative min-h-[520px] flex-1 rounded-2xl border border-white/[0.07] bg-white/[0.03] backdrop-blur-sm">
+          {loading && (
+            <div className="absolute inset-0 z-10 flex items-center justify-center rounded-2xl bg-[#06050f]/60 backdrop-blur-sm">
+              <div className="flex flex-col items-center gap-3">
+                <div className="h-8 w-8 animate-spin rounded-full border-2 border-purple-500/30 border-t-purple-500" />
+                <span className="text-sm text-white/50">Loading chart…</span>
               </div>
-            )}
-            {!ticker ? (
-              <div className="flex flex-col items-center justify-center gap-4">
-                <svg width="48" height="48" fill="none" viewBox="0 0 32 32">
-                  <rect width="32" height="32" rx="12" fill="#23203a" />
-                  <g>
-                    <rect
-                      x="8"
-                      y="8"
-                      width="6"
-                      height="6"
-                      rx="2"
-                      fill="#672eeb"
-                    />
-                    <rect
-                      x="18"
-                      y="8"
-                      width="6"
-                      height="6"
-                      rx="2"
-                      fill="#672eeb"
-                    />
-                    <rect
-                      x="8"
-                      y="18"
-                      width="6"
-                      height="6"
-                      rx="2"
-                      fill="#672eeb"
-                    />
-                    <rect
-                      x="18"
-                      y="18"
-                      width="6"
-                      height="6"
-                      rx="2"
-                      fill="#672eeb"
-                    />
-                  </g>
+            </div>
+          )}
+
+          {!ticker ? (
+            <div className="flex h-full min-h-[520px] flex-col items-center justify-center gap-4 text-center">
+              <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-purple-500/10 ring-1 ring-purple-500/20">
+                <svg width="28" height="28" fill="none" viewBox="0 0 24 24">
+                  <path d="M7 17V9M12 17V13M17 17V7" stroke="#A855F7" strokeWidth="2" strokeLinecap="round" />
                 </svg>
-                <span className="text-lg text-[#672eeb]">
-                  Enter a ticker above to see the chart
-                </span>
               </div>
-            ) : (
-              <div
-                className={`relative flex h-full w-full flex-col items-center justify-center${
-                  loading ? 'pointer-events-none opacity-0' : ''
-                }`}
-              >
-                {chartArea}
+              <div>
+                <div className="text-base font-semibold text-white/60">Enter a ticker to get started</div>
+                <div className="mt-1 text-sm text-white/30">Search for any publicly traded company above</div>
               </div>
-            )}
-          </div>
-        </main>
-      </div>
+            </div>
+          ) : (
+            <div
+              className={`absolute inset-0 p-4 transition-opacity ${
+                loading ? 'pointer-events-none opacity-0' : 'opacity-100'
+              }`}
+            >
+              {chartArea}
+            </div>
+          )}
+        </div>
+
+      </main>
     </div>
   );
 };

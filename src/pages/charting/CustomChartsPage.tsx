@@ -1,9 +1,8 @@
 import { useState, useEffect } from 'react';
 import { FaPlus, FaTimes, FaTrash, FaEdit } from 'react-icons/fa';
-import { Link } from 'react-router';
 import LineChart from './chart-types/LineChart';
 import BarChart from './chart-types/BarChart';
-import { useAuth } from '../../../src/contexts/AuthContext';
+import { useAuth } from '../../contexts/AuthContext';
 import {
   collection,
   addDoc,
@@ -14,34 +13,20 @@ import {
   query,
   orderBy,
 } from 'firebase/firestore';
-import { db } from '../../../src/firebase';
+import { db } from '../../firebase';
+import { ChartingNavbar } from '../../components/navbar/ChartingNavbar';
 
 const METRICS = [
-  {
-    label: 'Earnings Per Share',
-    value: 'Earnings Per Share',
-    sub: 'Profit per share',
-  },
-  {
-    label: 'Price To Earnings Ratio',
-    value: 'Price To Earnings Ratio',
-    sub: 'Valuation vs. earnings',
-  },
-  {
-    label: 'Price To Sales Ratio',
-    value: 'Price To Sales Ratio',
-    sub: 'Company valuation vs. revenue',
-  },
-  { label: 'Revenues', value: 'Revenues', sub: 'Total company revenue' },
-  { label: 'Net Income', value: 'Net Income', sub: 'Total company profit' },
-  { label: 'Market Cap', value: 'Market Cap', sub: 'Total company valuation' },
-  {
-    label: 'Dividend Yield %',
-    value: 'Dividend Yield %',
-    sub: 'Annual dividend as % of price',
-  },
+  { label: 'Earnings Per Share',      sub: 'Profit per share'               },
+  { label: 'Price To Earnings Ratio', sub: 'Valuation vs. earnings'        },
+  { label: 'Price To Sales Ratio',    sub: 'Valuation vs. revenue'         },
+  { label: 'Revenues',               sub: 'Total company revenue'          },
+  { label: 'Net Income',             sub: 'Total company profit'           },
+  { label: 'Market Cap',             sub: 'Total company valuation'        },
+  { label: 'Dividend Yield %',       sub: 'Annual dividend as % of price'  },
 ];
-const CHART_TYPES = ['Bar Chart', 'Line Chart'];
+
+const CHART_TYPES = ['Bar Chart', 'Line Chart'] as const;
 
 interface CustomChart {
   title: string;
@@ -52,511 +37,445 @@ interface CustomChart {
   endDate: string;
 }
 
+/* ── Shared input style ── */
+const inputCls =
+  'w-full rounded-xl border border-white/[0.08] bg-white/[0.04] px-4 py-2.5 text-sm text-white placeholder-white/25 transition focus:border-purple-500/50 focus:bg-white/[0.07] focus:outline-none focus:ring-1 focus:ring-purple-500/30';
+
 export default function CustomChartsPage() {
   const { currentUser } = useAuth();
-  // Set showModal to false by default
-  const [showModal, setShowModal] = useState(false);
-  const [title, setTitle] = useState('');
-  const [tickerInput, setTickerInput] = useState('');
-  const [tickers, setTickers] = useState<string[]>([]);
-  const [selectedMetric, setSelectedMetric] = useState(METRICS[0].value);
-  const [selectedChartType, setSelectedChartType] = useState(CHART_TYPES[0]);
-  const [startDate, setStartDate] = useState('');
-  const [endDate, setEndDate] = useState('');
-  const [customCharts, setCustomCharts] = useState<CustomChart[]>([]);
-  const [chartIds, setChartIds] = useState<string[]>([]); // To track Firestore doc ids
-  const [activeTab, setActiveTab] = useState(0);
-  const [editIdx, setEditIdx] = useState<number | null>(null);
+  const [showModal, setShowModal]               = useState(false);
+  const [title, setTitle]                       = useState('');
+  const [tickerInput, setTickerInput]           = useState('');
+  const [tickers, setTickers]                   = useState<string[]>([]);
+  const [selectedMetric, setSelectedMetric]     = useState(METRICS[0].label);
+  const [selectedChartType, setSelectedChartType] = useState<string>(CHART_TYPES[0]);
+  const [startDate, setStartDate]               = useState('');
+  const [endDate, setEndDate]                   = useState('');
+  const [customCharts, setCustomCharts]         = useState<CustomChart[]>([]);
+  const [chartIds, setChartIds]                 = useState<string[]>([]);
+  const [activeTab, setActiveTab]               = useState(0);
+  const [editIdx, setEditIdx]                   = useState<number | null>(null);
 
-  // Add ticker to tickers array
-  const handleAddTicker = () => {
-    const t = tickerInput.trim().toUpperCase();
-    if (t && !tickers.includes(t)) {
-      setTickers([...tickers, t]);
-    }
-    setTickerInput('');
-  };
-
-  // Remove ticker
-  const handleRemoveTicker = (t: string) => {
-    setTickers(tickers.filter((tk) => tk !== t));
-  };
-
-  // Load charts from Firestore if signed in
+  /* ── Firestore sync ── */
   useEffect(() => {
     if (!currentUser) return;
     const chartsRef = collection(db, 'users', currentUser.uid, 'customCharts');
     const q = query(chartsRef, orderBy('title'));
-    const unsub = onSnapshot(q, (snapshot) => {
+    return onSnapshot(q, (snapshot) => {
       const charts: CustomChart[] = [];
       const ids: string[] = [];
-      snapshot.forEach((doc) => {
-        const data = doc.data();
-        // Migration logic: support old and new chart formats
-        let tickers: string[] = [];
-        if (Array.isArray(data.tickers)) {
-          tickers = data.tickers;
-        } else if (typeof data.ticker === 'string') {
-          tickers = [data.ticker];
-        }
+      snapshot.forEach((d) => {
+        const data = d.data();
+        const t: string[] = Array.isArray(data.tickers)
+          ? data.tickers
+          : typeof data.ticker === 'string'
+          ? [data.ticker]
+          : [];
         charts.push({
           title: data.title || '',
-          tickers,
+          tickers: t,
           metric: data.metric || '',
           chartType: data.chartType || '',
           startDate: data.startDate || '',
           endDate: data.endDate || '',
         });
-        ids.push(doc.id);
+        ids.push(d.id);
       });
       setCustomCharts(charts);
       setChartIds(ids);
-      setActiveTab((prev) => Math.min(prev, charts.length - 1));
+      setActiveTab((prev) => Math.min(prev, Math.max(0, charts.length - 1)));
     });
-    return () => unsub();
   }, [currentUser]);
 
-  // Add chart (Firestore or local)
-  const handleAddChart = async () => {
-    const newChart: CustomChart = {
-      title,
-      tickers,
+  /* ── Ticker helpers ── */
+  const handleAddTicker = () => {
+    const t = tickerInput.trim().toUpperCase();
+    if (t && !tickers.includes(t)) setTickers((prev) => [...prev, t]);
+    setTickerInput('');
+  };
+  const handleRemoveTicker = (t: string) =>
+    setTickers((prev) => prev.filter((tk) => tk !== t));
+
+  /* ── CRUD ── */
+  const handleAddOrUpdateChart = async () => {
+    const chart: CustomChart = {
+      title, tickers,
       metric: selectedMetric,
       chartType: selectedChartType,
-      startDate,
-      endDate,
+      startDate, endDate,
     };
-    if (currentUser) {
-      const chartsRef = collection(
-        db,
-        'users',
-        currentUser.uid,
-        'customCharts'
-      );
-      await addDoc(chartsRef, newChart);
+    if (editIdx !== null) {
+      if (currentUser) {
+        const ref = doc(db, 'users', currentUser.uid, 'customCharts', chartIds[editIdx]);
+        await setDoc(ref, chart, { merge: true });
+      } else {
+        setCustomCharts((prev) => {
+          const arr = [...prev];
+          arr[editIdx] = chart;
+          return arr;
+        });
+      }
+      setEditIdx(null);
     } else {
-      setCustomCharts((prevCharts) => {
-        const newCharts = [...prevCharts, newChart];
-        setActiveTab(newCharts.length - 1);
-        return newCharts;
-      });
+      if (currentUser) {
+        await addDoc(collection(db, 'users', currentUser.uid, 'customCharts'), chart);
+      } else {
+        setCustomCharts((prev) => {
+          const next = [...prev, chart];
+          setActiveTab(next.length - 1);
+          return next;
+        });
+      }
     }
-    setShowModal(false);
-    setTitle('');
-    setTickers([]);
-    setTickerInput('');
-    setStartDate('');
-    setEndDate('');
+    closeModal();
   };
 
-  // Edit chart (autosave)
-  const handleEditChart = async (idx: number, updated: CustomChart) => {
-    if (currentUser) {
-      const chartId = chartIds[idx];
-      if (!chartId) return;
-      const chartRef = doc(
-        db,
-        'users',
-        currentUser.uid,
-        'customCharts',
-        chartId
-      );
-      await setDoc(chartRef, updated, { merge: true });
-    } else {
-      setCustomCharts((prev) => {
-        const arr = [...prev];
-        arr[idx] = updated;
-        return arr;
-      });
-    }
-  };
-
-  // Delete chart
   const handleDeleteChart = async (idx: number) => {
-    if (currentUser) {
-      const chartId = chartIds[idx];
-      if (!chartId) return;
-      const chartRef = doc(
-        db,
-        'users',
-        currentUser.uid,
-        'customCharts',
-        chartId
-      );
-      await deleteDoc(chartRef);
+    if (currentUser && chartIds[idx]) {
+      await deleteDoc(doc(db, 'users', currentUser.uid, 'customCharts', chartIds[idx]));
     } else {
       setCustomCharts((prev) => prev.filter((_, i) => i !== idx));
     }
-    setActiveTab((prev) => Math.max(0, prev - (idx === prev ? 1 : 0)));
+    setActiveTab((prev) => Math.max(0, prev - (idx <= prev ? 1 : 0)));
   };
 
-  // Chart rendering logic for each custom chart
-  const renderChart = (chart: CustomChart, idx: number) => {
-    const { tickers, metric, chartType, startDate, endDate } = chart;
-    if (!tickers || !tickers.length || !metric || !chartType) return null;
-    const chartKey = `chart-${idx}`;
-    if (chartType === 'Line Chart') {
-      return (
-        <LineChart
-          key={chartKey}
-          tickers={tickers}
-          metric={metric}
-          startDate={startDate}
-          endDate={endDate}
-          containerWidth="100%"
-          containerHeight="100%"
-        />
-      );
-    } else if (chartType === 'Bar Chart') {
-      return (
-        <BarChart
-          key={chartKey}
-          tickers={tickers}
-          metric={metric}
-          startDate={startDate}
-          endDate={endDate}
-          containerWidth="100%"
-          containerHeight="100%"
-        />
-      );
-    }
-    return null;
-  };
-
-  // Open modal for editing
-  const handleEditButton = (idx: number) => {
+  const openEditModal = (idx: number) => {
+    const c = customCharts[idx];
     setEditIdx(idx);
-    setTitle(customCharts[idx].title);
-    setTickers(customCharts[idx].tickers || []);
+    setTitle(c.title);
+    setTickers(c.tickers || []);
     setTickerInput('');
-    setSelectedMetric(customCharts[idx].metric);
-    setSelectedChartType(customCharts[idx].chartType);
-    setStartDate(customCharts[idx].startDate);
-    setEndDate(customCharts[idx].endDate);
+    setSelectedMetric(c.metric);
+    setSelectedChartType(c.chartType);
+    setStartDate(c.startDate);
+    setEndDate(c.endDate);
     setShowModal(true);
   };
 
-  // Add or update chart
-  const handleAddOrUpdateChart = async () => {
-    const newChart: CustomChart = {
-      title,
-      tickers,
-      metric: selectedMetric,
-      chartType: selectedChartType,
-      startDate,
-      endDate,
-    };
-    if (editIdx !== null) {
-      await handleEditChart(editIdx, newChart);
-      setEditIdx(null);
-    } else {
-      await handleAddChart();
-    }
+  const closeModal = () => {
     setShowModal(false);
+    setEditIdx(null);
     setTitle('');
     setTickers([]);
     setTickerInput('');
     setStartDate('');
     setEndDate('');
+    setSelectedMetric(METRICS[0].label);
+    setSelectedChartType(CHART_TYPES[0]);
   };
 
+  /* ── Chart renderer ── */
+  const renderChart = (chart: CustomChart, idx: number) => {
+    const { tickers, metric, chartType, startDate, endDate } = chart;
+    if (!tickers?.length || !metric || !chartType) return null;
+    const props = { key: `chart-${idx}`, tickers, metric, startDate, endDate, containerWidth: '100%', containerHeight: '100%' };
+    return chartType === 'Line Chart' ? <LineChart {...props} /> : <BarChart {...props} />;
+  };
+
+  const activeChart = customCharts[activeTab];
+
   return (
-    <div className="font-inter flex h-screen overflow-y-auto bg-[radial-gradient(ellipse_at_center,_#1E1B4B_30%,_#0F172A_100%)] text-white">
-      <div className="flex h-screen flex-1 flex-col">
-        {/* Navbar */}
-        <header className="flex items-center justify-between px-12 py-6">
-          <div className="flex items-center gap-4">
-            <Link to="/" className="flex items-center gap-4">
-              <span className="rounded-xl bg-[#672eeb] p-2">
-                <svg width="40" height="40" fill="none" viewBox="0 0 32 32">
-                  <rect width="32" height="32" rx="12" fill="#672eeb" />
-                  <path
-                    d="M10 22V12M16 22V16M22 22V10"
-                    stroke="#fff"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                  />
-                </svg>
-              </span>
-              <span className="ml-2 text-3xl font-bold text-white">
-                QuantEdge
-              </span>
-            </Link>
+    <div className="flex min-h-screen flex-col bg-[#06050f] text-white">
+      {/* Ambient orbs */}
+      <div className="pointer-events-none fixed inset-0 overflow-hidden">
+        <div className="absolute -top-48 -left-48 h-[600px] w-[600px] rounded-full bg-purple-700/15 blur-[140px]" />
+        <div className="absolute bottom-0 right-0 h-[400px] w-[400px] rounded-full bg-violet-600/10 blur-[120px]" />
+      </div>
+
+      <ChartingNavbar activeMode="custom" />
+
+      <main className="relative mx-auto flex w-full max-w-7xl flex-1 flex-col gap-6 px-6 py-8">
+
+        {/* Page header */}
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-extrabold tracking-tight">Custom Charts</h1>
+            <p className="mt-1 text-sm text-white/45">
+              Build and save personalized analytics dashboards to your account.
+            </p>
           </div>
-          <nav className="flex items-center gap-6">
-            <Link
-              to="/contact-us"
-              className="text-lg font-medium text-white transition hover:text-[#672eeb]"
-            >
-              Feedback
-            </Link>
-          </nav>
-        </header>
-        {/* Main content */}
-        <main className="animate-float-in flex w-full flex-col items-center pt-8 pb-16">
-          <div className="relative mb-6 flex w-full items-center justify-between">
-            <Link
-              to="/charting/preset"
-              className="ml-4 cursor-pointer rounded-lg border border-[#672eeb] bg-[#672eeb] px-4 py-2 text-lg font-semibold text-white shadow transition hover:bg-[#672eeb]"
-            >
-              &lt;-- Preset Charts
-            </Link>
-            {/* Centered title block */}
-            <div className="absolute top-1/2 left-1/2 flex -translate-x-1/2 -translate-y-1/2 flex-col items-center">
-              <h1 className="mb-2 text-4xl font-extrabold text-white">
-                Custom Charts
-              </h1>
-              <div className="text-lg text-slate-300">
-                Build your personalized analytics dashboard
-              </div>
+          <button
+            onClick={() => setShowModal(true)}
+            className="flex items-center gap-2 rounded-xl bg-purple-600 px-5 py-2.5 text-sm font-semibold text-white shadow shadow-purple-900/40 transition hover:bg-purple-500"
+          >
+            <FaPlus className="text-xs" /> New Chart
+          </button>
+        </div>
+
+        {/* Empty state */}
+        {customCharts.length === 0 ? (
+          <div className="flex flex-1 flex-col items-center justify-center gap-6 rounded-2xl border border-white/[0.07] bg-white/[0.03] py-24 text-center backdrop-blur-sm">
+            <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-purple-500/10 ring-1 ring-purple-500/20">
+              <svg width="28" height="28" fill="none" viewBox="0 0 24 24">
+                <rect x="3"  y="3"  width="7" height="7" rx="1.5" stroke="#A855F7" strokeWidth="2" />
+                <rect x="14" y="3"  width="7" height="7" rx="1.5" stroke="#A855F7" strokeWidth="2" />
+                <rect x="3"  y="14" width="7" height="7" rx="1.5" stroke="#A855F7" strokeWidth="2" />
+                <rect x="14" y="14" width="7" height="7" rx="1.5" stroke="#A855F7" strokeWidth="2" />
+              </svg>
+            </div>
+            <div>
+              <div className="text-base font-semibold text-white/60">No charts yet</div>
+              <div className="mt-1 text-sm text-white/30">Create your first chart to start building your dashboard</div>
             </div>
             <button
-              className="mr-4 flex cursor-pointer items-center gap-2 rounded-lg bg-[#672eeb] px-5 py-2 text-lg font-semibold text-white shadow transition hover:bg-[#672eeb]"
               onClick={() => setShowModal(true)}
+              className="flex items-center gap-2 rounded-xl bg-purple-600 px-6 py-2.5 text-sm font-semibold text-white shadow shadow-purple-900/40 transition hover:bg-purple-500"
             >
-              <FaPlus /> Add Chart
+              <FaPlus className="text-xs" /> Create your first chart
             </button>
+            {!currentUser && (
+              <p className="text-xs text-white/25">Sign in to save charts across sessions</p>
+            )}
           </div>
-          {/* Modal for creating custom chart */}
-          {showModal && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
-              <div className="relative max-h-[90vh] w-full max-w-4xl overflow-y-auto rounded-2xl border border-[#672eeb] bg-[#181a2a] p-10 shadow-2xl">
-                <button
-                  className="absolute top-4 right-4 cursor-pointer text-xl text-purple-200 hover:text-fuchsia-400"
-                  onClick={() => {
-                    setShowModal(false);
-                    setEditIdx(null);
-                  }}
+        ) : (
+          <>
+            {/* Tab strip */}
+            <div className="flex items-center gap-2 overflow-x-auto pb-1">
+              {customCharts.map((chart, idx) => (
+                <div
+                  key={idx}
+                  className={`group flex shrink-0 items-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold transition ${
+                    activeTab === idx
+                      ? 'bg-purple-600 text-white shadow shadow-purple-900/30'
+                      : 'border border-white/[0.07] bg-white/[0.03] text-white/55 hover:border-purple-500/25 hover:bg-white/[0.07] hover:text-white'
+                  }`}
                 >
-                  <FaTimes />
-                </button>
-                <div className="mb-6 flex items-center gap-3">
-                  <span className="rounded-full bg-[#672eeb] p-2">
-                    <svg width="28" height="28" fill="none" viewBox="0 0 24 24">
-                      <rect width="24" height="24" rx="8" fill="#672eeb" />
-                      <path
-                        d="M12 7v5l3 3"
-                        stroke="#fff"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                      />
-                    </svg>
-                  </span>
-                  <span className="text-2xl font-bold text-white">
-                    {editIdx !== null
-                      ? 'Edit Custom Chart'
-                      : 'Create Custom Chart'}
-                  </span>
+                  <button
+                    onClick={() => setActiveTab(idx)}
+                    className="max-w-[140px] truncate"
+                  >
+                    {chart.title || chart.tickers?.join(', ') || `Chart ${idx + 1}`}
+                  </button>
+                  {/* Edit */}
+                  <button
+                    onClick={(e) => { e.stopPropagation(); openEditModal(idx); }}
+                    className={`opacity-0 transition group-hover:opacity-100 ${activeTab === idx ? 'text-white/70 hover:text-white' : 'text-white/30 hover:text-white/70'}`}
+                    title="Edit chart"
+                  >
+                    <FaEdit className="text-xs" />
+                  </button>
+                  {/* Delete */}
+                  <button
+                    onClick={(e) => { e.stopPropagation(); handleDeleteChart(idx); }}
+                    className={`opacity-0 transition group-hover:opacity-100 ${activeTab === idx ? 'text-red-300 hover:text-red-200' : 'text-white/30 hover:text-red-400'}`}
+                    title="Delete chart"
+                  >
+                    <FaTrash className="text-xs" />
+                  </button>
                 </div>
-                <form className="flex flex-col gap-6">
-                  <div>
-                    <label className="mb-1 block text-xs text-purple-200">
-                      Chart Title
-                    </label>
-                    <input
-                      className="w-full rounded-md border border-[#672eeb] bg-[#23203a] p-3 text-white placeholder-purple-200 focus:ring-1 focus:ring-[#672eeb] focus:outline-none"
-                      placeholder="e.g., Apple Revenue Analysis"
-                      value={title}
-                      onChange={(e) => setTitle(e.target.value)}
-                    />
-                  </div>
-                  <div>
-                    <label className="mb-1 block text-xs text-purple-200">
-                      Stock Tickers
-                    </label>
-                    <div className="flex gap-2">
-                      <input
-                        className="w-full rounded-md border border-[#672eeb] bg-[#23203a] p-3 text-white placeholder-purple-200 focus:ring-1 focus:ring-[#672eeb] focus:outline-none"
-                        placeholder="Enter ticker (e.g., AAPL)"
-                        value={tickerInput}
-                        onChange={(e) => setTickerInput(e.target.value)}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter') {
-                            e.preventDefault();
-                            handleAddTicker();
-                          }
-                        }}
-                      />
-                      <button
-                        type="button"
-                        className="rounded-lg bg-[#672eeb] px-4 py-2 font-semibold text-white transition hover:bg-[#672eeb]"
-                        onClick={handleAddTicker}
-                      >
-                        Add
-                      </button>
-                    </div>
-                    {/* Show selected tickers */}
-                    <div className="mt-2 flex flex-wrap gap-2">
-                      {tickers.map((t) => (
-                        <span
-                          key={t}
-                          className="flex items-center gap-1 rounded bg-[#2d1e4a] px-3 py-1 text-sm text-white"
-                        >
-                          {t}
-                          <button
-                            type="button"
-                            className="ml-1 text-pink-300 hover:text-pink-500"
-                            onClick={() => handleRemoveTicker(t)}
-                          >
-                            <FaTimes />
-                          </button>
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                  <div>
-                    <label className="mb-1 block text-xs text-purple-200">
-                      Metric
-                    </label>
-                    <div className="mb-2 flex flex-wrap gap-3">
-                      {METRICS.map((m) => (
-                        <button
-                          key={m.value}
-                          type="button"
-                          className={`flex min-h-[80px] w-44 max-w-[180px] flex-col items-start justify-between rounded-xl border px-4 py-3 text-left font-bold break-words whitespace-normal text-white transition ${
-                            selectedMetric === m.value
-                              ? 'border-[#672eeb] bg-[#2d1e4a]'
-                              : 'border-[#23203a]/60 bg-[#23203a] hover:bg-[#2d1e4a]/80'
-                          }`}
-                          onClick={() => setSelectedMetric(m.value)}
-                        >
-                          <span className="text-base font-bold break-words whitespace-normal">
-                            {m.label}
-                          </span>
-                          <span className="mt-1 text-xs leading-tight font-normal break-words whitespace-normal text-purple-200">
-                            {m.sub}
-                          </span>
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                  <div>
-                    <label className="mb-1 block text-xs text-purple-200">
-                      Chart Type
-                    </label>
-                    <div className="mb-2 flex gap-2">
-                      {CHART_TYPES.map((type) => (
-                        <button
-                          key={type}
-                          type="button"
-                          className={`rounded-lg px-6 py-2 font-semibold transition ${
-                            selectedChartType === type
-                              ? 'bg-[#672eeb] text-white'
-                              : 'bg-[#23203a] text-slate-300 hover:bg-[#2d1e4a]/80'
-                          }`}
-                          onClick={() => setSelectedChartType(type)}
-                        >
-                          {type}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                  <div>
-                    <label className="mb-1 block text-xs text-purple-200">
-                      Start Date
-                    </label>
-                    <input
-                      type="date"
-                      className="w-full rounded-md border border-[#672eeb] bg-[#23203a] p-3 text-white placeholder-purple-200 focus:ring-1 focus:ring-[#672eeb] focus:outline-none"
-                      value={startDate}
-                      onChange={(e) => setStartDate(e.target.value)}
-                    />
-                  </div>
-                  <div>
-                    <label className="mb-1 block text-xs text-purple-200">
-                      End Date
-                    </label>
-                    <input
-                      type="date"
-                      className="w-full rounded-md border border-[#672eeb] bg-[#23203a] p-3 text-white placeholder-purple-200 focus:ring-1 focus:ring-[#672eeb] focus:outline-none"
-                      value={endDate}
-                      onChange={(e) => setEndDate(e.target.value)}
-                    />
-                  </div>
-                  <div className="mt-4 flex justify-end gap-2">
-                    <button
-                      type="button"
-                      className="cursor-pointer rounded-lg bg-[#672eeb] px-6 py-2 font-semibold text-white transition hover:bg-[#672eeb]"
-                      onClick={() => {
-                        setShowModal(false);
-                        setEditIdx(null);
-                      }}
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      type="button"
-                      className="cursor-pointer rounded-lg bg-[#672eeb] px-6 py-2 font-semibold text-white transition hover:bg-[#672eeb]"
-                      onClick={handleAddOrUpdateChart}
-                    >
-                      {editIdx !== null ? 'Update Chart' : '+ Add Chart'}
-                    </button>
-                  </div>
-                </form>
+              ))}
+            </div>
+
+            {/* Active chart metadata strip */}
+            {activeChart && (
+              <div className="flex flex-wrap items-center gap-3 text-xs text-white/35">
+                {activeChart.tickers.map((t) => (
+                  <span key={t} className="rounded-md bg-purple-500/15 px-2 py-0.5 font-semibold text-purple-300 ring-1 ring-purple-500/20">
+                    {t}
+                  </span>
+                ))}
+                <span className="text-white/20">·</span>
+                <span>{activeChart.metric}</span>
+                <span className="text-white/20">·</span>
+                <span>{activeChart.chartType}</span>
+                {activeChart.startDate && (
+                  <>
+                    <span className="text-white/20">·</span>
+                    <span>{activeChart.startDate} → {activeChart.endDate || 'present'}</span>
+                  </>
+                )}
+              </div>
+            )}
+
+            {/* Chart area */}
+            <div className="relative min-h-[520px] flex-1 rounded-2xl border border-white/[0.07] bg-white/[0.03] backdrop-blur-sm">
+              <div className="absolute inset-0 p-4">
+                {activeChart ? renderChart(activeChart, activeTab) : null}
               </div>
             </div>
-          )}
-          {/* Custom charts dashboard placeholder */}
-          <div className="mt-4 flex w-full flex-col items-center justify-center">
-            {customCharts.length === 0 ? (
-              <div className="text-lg text-slate-400">
-                No custom charts yet. Add your first chart!
+          </>
+        )}
+      </main>
+
+      {/* ── Create / Edit modal ── */}
+      {showModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4 backdrop-blur-sm">
+          <div className="relative w-full max-w-2xl overflow-y-auto rounded-2xl border border-white/[0.09] bg-[#0d0b1e] p-8 shadow-2xl shadow-purple-950/50 max-h-[90vh]">
+
+            {/* Modal header */}
+            <div className="mb-6 flex items-center justify-between">
+              <div>
+                <h2 className="text-xl font-bold">
+                  {editIdx !== null ? 'Edit Chart' : 'New Chart'}
+                </h2>
+                <p className="mt-0.5 text-sm text-white/40">
+                  {editIdx !== null
+                    ? 'Update the settings for this chart'
+                    : 'Configure your chart — it will be saved to your account'}
+                </p>
               </div>
-            ) : (
-              <>
-                <div className="mb-4 flex flex-wrap gap-2">
-                  {customCharts.map((chart, idx) => (
-                    <button
-                      key={idx}
-                      className={`rounded-t-lg border-b-2 px-6 py-2 font-semibold transition ${
-                        activeTab === idx
-                          ? 'border-[#672eeb] bg-[#672eeb] text-white'
-                          : 'border-transparent bg-[#23203a] text-slate-300 hover:bg-[#2d1e4a]/80'
-                      }`}
-                      onClick={() => setActiveTab(idx)}
-                    >
-                      {chart.title ||
-                        (chart.tickers && chart.tickers.join(', ')) ||
-                        `Chart ${idx + 1}`}
-                      <span className="ml-2 flex items-center gap-2">
+              <button
+                onClick={closeModal}
+                className="flex h-8 w-8 items-center justify-center rounded-lg text-white/40 transition hover:bg-white/[0.07] hover:text-white"
+              >
+                <FaTimes />
+              </button>
+            </div>
+
+            <div className="flex flex-col gap-5">
+
+              {/* Title */}
+              <div>
+                <label className="mb-1.5 block text-xs font-semibold uppercase tracking-widest text-white/40">
+                  Chart Title
+                </label>
+                <input
+                  className={inputCls}
+                  placeholder="e.g. Apple Revenue Analysis"
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                />
+              </div>
+
+              {/* Tickers */}
+              <div>
+                <label className="mb-1.5 block text-xs font-semibold uppercase tracking-widest text-white/40">
+                  Stock Tickers
+                </label>
+                <div className="flex gap-2">
+                  <input
+                    className={inputCls}
+                    placeholder="Add ticker (e.g. AAPL) and press Enter"
+                    value={tickerInput}
+                    onChange={(e) => setTickerInput(e.target.value)}
+                    onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleAddTicker(); } }}
+                  />
+                  <button
+                    type="button"
+                    onClick={handleAddTicker}
+                    className="rounded-xl bg-purple-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-purple-500"
+                  >
+                    Add
+                  </button>
+                </div>
+                {tickers.length > 0 && (
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    {tickers.map((t) => (
+                      <span
+                        key={t}
+                        className="flex items-center gap-1.5 rounded-lg bg-purple-500/15 px-3 py-1 text-xs font-semibold text-purple-300 ring-1 ring-purple-500/20"
+                      >
+                        {t}
                         <button
-                          className="inline cursor-pointer rounded-full p-1 text-white"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleEditButton(idx);
-                          }}
-                          title="Edit chart"
-                          tabIndex={-1}
+                          type="button"
+                          onClick={() => handleRemoveTicker(t)}
+                          className="text-purple-400/60 transition hover:text-red-400"
                         >
-                          <FaEdit />
+                          <FaTimes className="text-[10px]" />
                         </button>
-                        <FaTrash
-                          className="inline cursor-pointer text-pink-300 hover:text-pink-500"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleDeleteChart(idx);
-                          }}
-                          title="Delete chart"
-                        />
                       </span>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Metric */}
+              <div>
+                <label className="mb-1.5 block text-xs font-semibold uppercase tracking-widest text-white/40">
+                  Metric
+                </label>
+                <div className="flex flex-wrap gap-2">
+                  {METRICS.map((m) => (
+                    <button
+                      key={m.label}
+                      type="button"
+                      onClick={() => setSelectedMetric(m.label)}
+                      className={`rounded-lg px-3.5 py-2 text-sm font-medium transition ${
+                        selectedMetric === m.label
+                          ? 'bg-purple-600 text-white shadow shadow-purple-900/30'
+                          : 'border border-white/[0.07] bg-white/[0.03] text-white/55 hover:border-purple-500/25 hover:bg-white/[0.07] hover:text-white'
+                      }`}
+                    >
+                      {m.label}
                     </button>
                   ))}
                 </div>
-                <div className="relative flex min-h-[800px] w-full max-w-[1400px] flex-1 flex-col items-center justify-center overflow-auto rounded-2xl border-2 border-dashed border-[#672eeb]/40 bg-[#181a2a] p-4">
-                  {/* Chart area same as PresetChartsPage */}
-                  <div className="flex h-full w-full flex-col items-center justify-center">
-                    <div className="flex w-full flex-1 items-center justify-center">
-                      <div className="h-full w-full" style={{ minHeight: 320 }}>
-                        {renderChart(customCharts[activeTab], activeTab)}
-                      </div>
-                    </div>
-                  </div>
+                <p className="mt-1.5 text-xs text-white/30">
+                  {METRICS.find((m) => m.label === selectedMetric)?.sub}
+                </p>
+              </div>
+
+              {/* Chart Type */}
+              <div>
+                <label className="mb-1.5 block text-xs font-semibold uppercase tracking-widest text-white/40">
+                  Chart Type
+                </label>
+                <div className="flex gap-2">
+                  {CHART_TYPES.map((type) => (
+                    <button
+                      key={type}
+                      type="button"
+                      onClick={() => setSelectedChartType(type)}
+                      className={`rounded-lg px-4 py-2 text-sm font-semibold transition ${
+                        selectedChartType === type
+                          ? 'bg-purple-600 text-white shadow shadow-purple-900/30'
+                          : 'border border-white/[0.07] bg-white/[0.03] text-white/55 hover:border-purple-500/25 hover:bg-white/[0.07] hover:text-white'
+                      }`}
+                    >
+                      {type}
+                    </button>
+                  ))}
                 </div>
-              </>
-            )}
+              </div>
+
+              {/* Date range */}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="mb-1.5 block text-xs font-semibold uppercase tracking-widest text-white/40">
+                    Start Date
+                  </label>
+                  <input
+                    type="date"
+                    className={inputCls}
+                    value={startDate}
+                    onChange={(e) => setStartDate(e.target.value)}
+                  />
+                </div>
+                <div>
+                  <label className="mb-1.5 block text-xs font-semibold uppercase tracking-widest text-white/40">
+                    End Date
+                  </label>
+                  <input
+                    type="date"
+                    className={inputCls}
+                    value={endDate}
+                    onChange={(e) => setEndDate(e.target.value)}
+                  />
+                </div>
+              </div>
+
+              {/* Actions */}
+              <div className="flex justify-end gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={closeModal}
+                  className="rounded-xl border border-white/[0.08] px-5 py-2.5 text-sm font-semibold text-white/60 transition hover:border-white/20 hover:text-white"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={handleAddOrUpdateChart}
+                  disabled={!title && tickers.length === 0}
+                  className="rounded-xl bg-purple-600 px-6 py-2.5 text-sm font-semibold text-white shadow shadow-purple-900/40 transition hover:bg-purple-500 disabled:cursor-not-allowed disabled:opacity-40"
+                >
+                  {editIdx !== null ? 'Save Changes' : 'Create Chart'}
+                </button>
+              </div>
+            </div>
           </div>
-        </main>
-      </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -1,96 +1,83 @@
-import { Link, useNavigate } from 'react-router';
+import { useNavigate } from 'react-router';
+import { ChartingNavbar } from '../../../components/navbar/ChartingNavbar';
 
 export default function SelectDashboardTypePage() {
   const navigate = useNavigate();
+
   return (
-    <div className="min-h-screen w-full bg-[radial-gradient(ellipse_at_center,_#1E1B4B_30%,_#0F172A_100%)]">
-      {/* Navbar */}
-      <header className="flex items-center justify-between px-12 py-6">
-        <div className="flex items-center gap-4">
-          <Link to="/" className="flex cursor-pointer items-center gap-4">
-            <span className="rounded-xl bg-[#672eeb] p-2">
-              <svg width="40" height="40" fill="none" viewBox="0 0 32 32">
-                <rect width="32" height="32" rx="12" fill="#672eeb" />
-                <path
-                  d="M10 22V12M16 22V16M22 22V10"
-                  stroke="#fff"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                />
-              </svg>
-            </span>
-            <span className="ml-2 text-3xl font-bold text-white">
-              QuantEdge
-            </span>
-          </Link>
+    <div className="min-h-screen w-full bg-[#06050f] text-white">
+      {/* Ambient orbs */}
+      <div className="pointer-events-none fixed inset-0 overflow-hidden">
+        <div className="absolute -top-48 -left-48 h-[600px] w-[600px] rounded-full bg-purple-700/20 blur-[140px]" />
+        <div className="absolute -bottom-32 -right-32 h-[500px] w-[500px] rounded-full bg-violet-600/15 blur-[130px]" />
+      </div>
+
+      <ChartingNavbar />
+
+      <main className="relative flex min-h-[calc(100vh-57px)] flex-col items-center justify-center px-6 py-16">
+        {/* Heading */}
+        <div className="animate-fade-up mb-12 text-center">
+          <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-purple-500/30 bg-purple-500/10 px-4 py-1.5">
+            <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-purple-400" />
+            <span className="text-sm font-medium text-purple-300">Choose your mode</span>
+          </div>
+          <h1 className="text-4xl font-extrabold tracking-tight lg:text-5xl">
+            How do you want to explore?
+          </h1>
+          <p className="mt-4 text-lg text-white/50">
+            Start with preset views or build a fully custom dashboard
+          </p>
         </div>
-        <nav className="flex items-center gap-6">
-          <Link
-            to="/contact-us"
-            className="text-lg font-medium text-white transition hover:text-[#8B5CF6]"
-          >
-            Feedback
-          </Link>
-        </nav>
-      </header>
-      {/* Main content */}
-      <main className="flex flex-col items-center justify-center px-4 pt-16 pb-16">
-        <h1 className="mb-4 text-center text-4xl font-extrabold text-white md:text-5xl">
-          Build Your Analytics
-        </h1>
-        <div className="mb-8 text-center text-lg text-slate-300">
-          Choose how you want to start exploring financial data
-        </div>
-        <div className="grid w-full max-w-3xl gap-8 md:grid-cols-2">
-          {/* Preset Charts Card */}
+
+        {/* Cards */}
+        <div className="animate-fade-up-delay grid w-full max-w-2xl gap-5 md:grid-cols-2">
+
+          {/* Preset */}
           <button
-            className="group cursor-pointer rounded-2xl border border-[#23203a]/60 bg-[#181a2a] p-8 shadow-lg transition hover:bg-[#23203a] hover:shadow-xl focus:outline-none"
             onClick={() => navigate('/charting/preset')}
+            className="group flex flex-col rounded-2xl border border-white/[0.07] bg-white/[0.03] p-8 text-left backdrop-blur-sm transition-all duration-300 hover:border-purple-500/30 hover:bg-white/[0.06] hover:shadow-2xl hover:shadow-purple-950/30"
           >
-            <div className="mb-6 flex h-14 w-14 items-center justify-center rounded-xl bg-[#672eeb]/20">
-              <svg width="32" height="32" fill="none" viewBox="0 0 32 32">
-                <rect width="32" height="32" rx="12" fill="#8B5CF6" />
-                <g>
-                  <rect x="8" y="8" width="6" height="6" rx="2" fill="#fff" />
-                  <rect x="18" y="8" width="6" height="6" rx="2" fill="#fff" />
-                  <rect x="8" y="18" width="6" height="6" rx="2" fill="#fff" />
-                  <rect x="18" y="18" width="6" height="6" rx="2" fill="#fff" />
-                </g>
+            <div className="mb-5 flex h-12 w-12 items-center justify-center rounded-xl bg-purple-500/10 ring-1 ring-purple-500/20 transition group-hover:bg-purple-500/20">
+              <svg width="22" height="22" fill="none" viewBox="0 0 24 24">
+                <path d="M7 17V9M12 17V13M17 17V7" stroke="#A855F7" strokeWidth="2" strokeLinecap="round" />
               </svg>
             </div>
-            <div className="mb-2 text-xl font-bold text-white">
-              Preset Charts
-            </div>
-            <div className="text-md text-slate-300">
-              Quick access to common financial metrics. Just enter a ticker and
-              choose your visualization.
+            <div className="mb-2 text-xl font-bold">Preset Charts</div>
+            <p className="text-sm leading-relaxed text-white/50">
+              Instant financial views. Search any ticker, pick a metric, and choose from our fixed time periods — no setup needed.
+            </p>
+            <div className="mt-6 flex items-center gap-1.5 text-sm font-semibold text-purple-400 transition group-hover:gap-2">
+              Explore presets <span>→</span>
             </div>
           </button>
-          {/* Custom Charts Card */}
+
+          {/* Custom */}
           <button
-            className="group cursor-pointer rounded-2xl border border-[#23203a]/60 bg-[#672eeb] p-8 shadow-lg transition hover:bg-[#7c4dff] hover:shadow-xl focus:outline-none"
             onClick={() => navigate('/charting/custom')}
+            className="group flex flex-col rounded-2xl border border-purple-500/25 bg-purple-600/8 p-8 text-left backdrop-blur-sm transition-all duration-300 hover:border-purple-500/45 hover:bg-purple-600/15 hover:shadow-2xl hover:shadow-purple-950/30"
           >
-            <div className="mb-6 flex h-14 w-14 items-center justify-center rounded-xl bg-[#8B5CF6]/20">
-              <svg width="32" height="32" fill="none" viewBox="0 0 32 32">
-                <rect width="32" height="32" rx="12" fill="#8B5CF6" />
-                <path
-                  d="M16 8l4 4-4 4-4-4 4-4zm0 8v8"
-                  stroke="#fff"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                />
+            <div className="mb-5 flex h-12 w-12 items-center justify-center rounded-xl bg-purple-600/20 ring-1 ring-purple-500/30 transition group-hover:bg-purple-600/30">
+              <svg width="22" height="22" fill="none" viewBox="0 0 24 24">
+                <rect x="3"  y="3"  width="7" height="7" rx="1.5" stroke="#A855F7" strokeWidth="2" />
+                <rect x="14" y="3"  width="7" height="7" rx="1.5" stroke="#A855F7" strokeWidth="2" />
+                <rect x="3"  y="14" width="7" height="7" rx="1.5" stroke="#A855F7" strokeWidth="2" />
+                <rect x="14" y="14" width="7" height="7" rx="1.5" stroke="#A855F7" strokeWidth="2" />
               </svg>
             </div>
-            <div className="mb-2 text-xl font-bold text-white">
-              Custom Charts
-            </div>
-            <div className="text-md text-slate-300">
-              Build personalized charts with custom titles, metrics, and
-              timeframes for your research.
+            <div className="mb-2 text-xl font-bold">Custom Charts</div>
+            <p className="text-sm leading-relaxed text-white/50">
+              Build a personal dashboard. Compare multiple tickers, pick any metric and date range, then save charts to your account.
+            </p>
+            <div className="mt-6 flex items-center gap-1.5 text-sm font-semibold text-purple-400 transition group-hover:gap-2">
+              Build a dashboard <span>→</span>
             </div>
           </button>
         </div>
+
+        {/* Subtle tip */}
+        <p className="animate-fade-up-delay mt-10 text-xs text-white/25">
+          Custom charts require an account to save and sync across devices
+        </p>
       </main>
     </div>
   );

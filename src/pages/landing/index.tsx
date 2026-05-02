@@ -1,6 +1,9 @@
 import { Link, useNavigate } from 'react-router';
 import { useAuth } from '../../contexts/AuthContext';
+import { useTheme } from '../../contexts/ThemeContext';
 import UserAvatar from '../../components/navbar/UserAvatar';
+import { Logo } from '../../components/Logo';
+import { FaSun, FaMoon } from 'react-icons/fa';
 import { useEffect, useRef, useState } from 'react';
 
 function useScrollReveal(threshold = 0.12) {
@@ -27,6 +30,7 @@ const revealClass = (visible: boolean) =>
 export const Landing = () => {
   const navigate = useNavigate();
   const { currentUser, logout } = useAuth();
+  const { theme, toggleTheme } = useTheme();
   const [scrolled, setScrolled] = useState(false);
 
   const statsReveal = useScrollReveal();
@@ -41,7 +45,7 @@ export const Landing = () => {
   }, []);
 
   return (
-    <div className="min-h-screen w-full overflow-x-hidden bg-[#06050f] text-white">
+    <div className="min-h-screen w-full overflow-x-hidden bg-[#f5f3ff] dark:bg-[#06050f] text-gray-900 dark:text-white">
       {/* ── Ambient background orbs ── */}
       <div className="pointer-events-none fixed inset-0 overflow-hidden">
         <div className="animate-orb absolute -top-52 -left-52 h-[700px] w-[700px] rounded-full bg-purple-700 blur-[140px]" />
@@ -53,38 +57,39 @@ export const Landing = () => {
       <header
         className={`fixed top-0 right-0 left-0 z-50 transition-all duration-300 ${
           scrolled
-            ? 'border-b border-white/[0.06] bg-[#06050f]/75 backdrop-blur-xl'
+            ? 'border-b border-black/[0.06] dark:border-white/[0.06] bg-[#f5f3ff]/75 dark:bg-[#06050f]/75 backdrop-blur-xl'
             : 'bg-transparent'
         }`}
       >
         <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
-          {/* Logo */}
           <Link to="/">
-            <img
-              src="/quantedge-logo.svg"
-              alt="QuantEdge"
-              className="h-8 w-auto"
-            />
+            <Logo className="h-8 w-auto" />
           </Link>
 
-          {/* Center nav */}
           <nav className="hidden items-center gap-1 md:flex">
             <a
               href="#features"
-              className="rounded-lg px-4 py-2 text-sm font-medium text-white/60 transition hover:bg-white/[0.06] hover:text-white"
+              className="rounded-lg px-4 py-2 text-sm font-medium text-gray-500 dark:text-white/60 transition hover:bg-black/[0.06] dark:hover:bg-white/[0.06] hover:text-gray-900 dark:hover:text-white"
             >
               Features
             </a>
             <a
               href="#how-it-works"
-              className="rounded-lg px-4 py-2 text-sm font-medium text-white/60 transition hover:bg-white/[0.06] hover:text-white"
+              className="rounded-lg px-4 py-2 text-sm font-medium text-gray-500 dark:text-white/60 transition hover:bg-black/[0.06] dark:hover:bg-white/[0.06] hover:text-gray-900 dark:hover:text-white"
             >
               How it works
             </a>
           </nav>
 
-          {/* Auth actions */}
           <div className="flex items-center gap-3">
+            <button
+              onClick={toggleTheme}
+              title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+              className="flex h-8 w-8 items-center justify-center rounded-full border border-black/[0.10] dark:border-white/[0.12] bg-black/[0.04] dark:bg-white/[0.05] text-gray-500 dark:text-white/60 transition hover:bg-black/[0.08] dark:hover:bg-white/[0.10] hover:text-gray-900 dark:hover:text-white"
+            >
+              {theme === 'dark' ? <FaSun className="text-xs" /> : <FaMoon className="text-xs" />}
+            </button>
+
             {currentUser ? (
               <>
                 <UserAvatar
@@ -103,7 +108,7 @@ export const Landing = () => {
               <>
                 <Link
                   to="/auth/log-in"
-                  className="rounded-lg px-4 py-2 text-sm font-medium text-white/60 transition hover:text-white"
+                  className="rounded-lg px-4 py-2 text-sm font-medium text-gray-500 dark:text-white/60 transition hover:text-gray-900 dark:hover:text-white"
                 >
                   Sign In
                 </Link>
@@ -126,7 +131,7 @@ export const Landing = () => {
           <div className="animate-fade-up">
             <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-purple-500/30 bg-purple-500/10 px-4 py-1.5">
               <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-purple-400" />
-              <span className="text-sm font-medium text-purple-300">
+              <span className="text-sm font-medium text-purple-600 dark:text-purple-300">
                 Institutional-grade analytics
               </span>
             </div>
@@ -139,7 +144,7 @@ export const Landing = () => {
               </span>
             </h1>
 
-            <p className="mb-10 max-w-md text-lg leading-relaxed text-white/55">
+            <p className="mb-10 max-w-md text-lg leading-relaxed text-gray-500 dark:text-white/55">
               QuantEdge brings the analytics power of institutional trading
               desks to every investor — real data, stunning visuals, zero noise.
             </p>
@@ -156,7 +161,7 @@ export const Landing = () => {
               </button>
               <Link
                 to="/ticker-info"
-                className="rounded-xl border border-white/10 px-8 py-3.5 text-base font-semibold text-white/70 transition hover:border-white/20 hover:bg-white/[0.05] hover:text-white"
+                className="rounded-xl border border-black/[0.10] dark:border-white/10 px-8 py-3.5 text-base font-semibold text-gray-600 dark:text-white/70 transition hover:border-black/[0.20] dark:hover:border-white/20 hover:bg-black/[0.04] dark:hover:bg-white/[0.05] hover:text-gray-900 dark:hover:text-white"
               >
                 Explore Tickers
               </Link>
@@ -165,27 +170,24 @@ export const Landing = () => {
 
           {/* Right: chart card */}
           <div className="animate-fade-up-delay relative">
-            {/* Main chart card */}
-            <div className="relative rounded-2xl border border-white/[0.07] bg-white/[0.03] p-6 shadow-2xl shadow-purple-950/40 backdrop-blur-sm">
-              {/* Card header */}
+            <div className="relative rounded-2xl border border-black/[0.07] dark:border-white/[0.07] bg-black/[0.04] dark:bg-white/[0.03] p-6 shadow-2xl shadow-purple-950/20 dark:shadow-purple-950/40 backdrop-blur-sm">
               <div className="mb-5 flex items-start justify-between">
                 <div>
-                  <div className="text-xs font-medium tracking-widest text-white/40 uppercase">
+                  <div className="text-xs font-medium tracking-widest text-gray-400 dark:text-white/40 uppercase">
                     AAPL · Apple Inc.
                   </div>
                   <div className="mt-1 text-3xl font-bold tracking-tight">
                     $189.42
                   </div>
-                  <div className="mt-0.5 text-sm text-white/50">
+                  <div className="mt-0.5 text-sm text-gray-400 dark:text-white/50">
                     +$4.57 today
                   </div>
                 </div>
-                <span className="rounded-lg bg-emerald-500/15 px-3 py-1.5 text-sm font-semibold text-emerald-400 ring-1 ring-emerald-500/20">
+                <span className="rounded-lg bg-emerald-500/15 px-3 py-1.5 text-sm font-semibold text-emerald-600 dark:text-emerald-400 ring-1 ring-emerald-500/20">
                   +2.47%
                 </span>
               </div>
 
-              {/* Animated SVG chart */}
               <svg
                 viewBox="0 0 380 140"
                 className="w-full"
@@ -203,7 +205,6 @@ export const Landing = () => {
                   </linearGradient>
                 </defs>
 
-                {/* Subtle grid */}
                 {[35, 70, 105].map((y) => (
                   <line
                     key={y}
@@ -211,19 +212,17 @@ export const Landing = () => {
                     y1={y}
                     x2="380"
                     y2={y}
-                    stroke="white"
-                    strokeOpacity="0.04"
+                    stroke="currentColor"
+                    strokeOpacity="0.06"
                     strokeWidth="1"
                   />
                 ))}
 
-                {/* Area fill */}
                 <path
                   d="M0,130 C30,126 55,118 80,108 C105,98 125,92 150,82 C175,72 195,64 220,54 C245,44 268,34 295,24 C318,15 345,9 370,4 L380,2 L380,140 L0,140 Z"
                   fill="url(#areaGrad)"
                 />
 
-                {/* Animated line (pathLength="1" so dasharray works) */}
                 <path
                   pathLength="1"
                   d="M0,130 C30,126 55,118 80,108 C105,98 125,92 150,82 C175,72 195,64 220,54 C245,44 268,34 295,24 C318,15 345,9 370,4 L380,2"
@@ -233,18 +232,10 @@ export const Landing = () => {
                   className="chart-draw"
                 />
 
-                {/* End glow dot */}
-                <circle
-                  cx="380"
-                  cy="2"
-                  r="5"
-                  fill="#A855F7"
-                  fillOpacity="0.25"
-                />
+                <circle cx="380" cy="2" r="5" fill="#A855F7" fillOpacity="0.25" />
                 <circle cx="380" cy="2" r="3" fill="#C084FC" />
               </svg>
 
-              {/* Metric pills */}
               <div className="mt-4 grid grid-cols-3 gap-2.5">
                 {[
                   { label: 'P/E Ratio', value: '28.5x' },
@@ -253,9 +244,9 @@ export const Landing = () => {
                 ].map((m) => (
                   <div
                     key={m.label}
-                    className="rounded-xl bg-white/[0.04] p-3 text-center ring-1 ring-white/[0.05]"
+                    className="rounded-xl bg-black/[0.04] dark:bg-white/[0.04] p-3 text-center ring-1 ring-black/[0.05] dark:ring-white/[0.05]"
                   >
-                    <div className="text-[11px] font-medium text-white/40">
+                    <div className="text-[11px] font-medium text-gray-400 dark:text-white/40">
                       {m.label}
                     </div>
                     <div className="mt-0.5 text-sm font-bold">{m.value}</div>
@@ -265,30 +256,27 @@ export const Landing = () => {
             </div>
 
             {/* Floating metric cards */}
-            {/* Revenue Growth — right edge, clear of the +2.47% badge */}
-            <div className="animate-float absolute top-1/3 -right-6 z-10 rounded-xl border border-purple-500/20 bg-[#0d0b1e]/90 px-4 py-3 shadow-xl backdrop-blur-md">
-              <div className="text-[11px] font-medium text-white/45">
+            <div className="animate-float absolute top-1/3 -right-6 z-10 rounded-xl border border-purple-500/20 bg-white/90 dark:bg-[#0d0b1e]/90 px-4 py-3 shadow-xl backdrop-blur-md">
+              <div className="text-[11px] font-medium text-gray-400 dark:text-white/45">
                 Revenue Growth
               </div>
-              <div className="mt-0.5 text-base font-bold text-emerald-400">
+              <div className="mt-0.5 text-base font-bold text-emerald-500 dark:text-emerald-400">
                 ↑ 12.4%
               </div>
             </div>
 
-            {/* EPS — bottom left, outside the card */}
-            <div className="animate-float-slow absolute -bottom-5 -left-5 z-10 rounded-xl border border-purple-500/20 bg-[#0d0b1e]/90 px-4 py-3 shadow-xl backdrop-blur-md">
-              <div className="text-[11px] font-medium text-white/45">
+            <div className="animate-float-slow absolute -bottom-5 -left-5 z-10 rounded-xl border border-purple-500/20 bg-white/90 dark:bg-[#0d0b1e]/90 px-4 py-3 shadow-xl backdrop-blur-md">
+              <div className="text-[11px] font-medium text-gray-400 dark:text-white/45">
                 EPS (TTM)
               </div>
               <div className="mt-0.5 text-base font-bold">$6.43</div>
             </div>
 
-            {/* Dividend Yield — top center, above the chart */}
-            <div className="animate-float-mid absolute -top-5 left-1/2 z-10 -translate-x-1/2 rounded-xl border border-purple-500/20 bg-[#0d0b1e]/90 px-4 py-3 shadow-xl backdrop-blur-md">
-              <div className="text-[11px] font-medium text-white/45">
+            <div className="animate-float-mid absolute -top-5 left-1/2 z-10 -translate-x-1/2 rounded-xl border border-purple-500/20 bg-white/90 dark:bg-[#0d0b1e]/90 px-4 py-3 shadow-xl backdrop-blur-md">
+              <div className="text-[11px] font-medium text-gray-400 dark:text-white/45">
                 Div. Yield
               </div>
-              <div className="mt-0.5 text-base font-bold text-purple-300">
+              <div className="mt-0.5 text-base font-bold text-purple-600 dark:text-purple-300">
                 0.51%
               </div>
             </div>
@@ -298,7 +286,7 @@ export const Landing = () => {
 
       {/* ── Stats band ── */}
       <div ref={statsReveal.ref} className={revealClass(statsReveal.visible)}>
-        <div className="border-y border-white/[0.05] bg-white/[0.02]">
+        <div className="border-y border-black/[0.07] dark:border-white/[0.05] bg-black/[0.03] dark:bg-white/[0.02]">
           <div className="mx-auto grid max-w-7xl grid-cols-2 md:grid-cols-4">
             {[
               { value: '50+', label: 'Financial Metrics' },
@@ -308,12 +296,12 @@ export const Landing = () => {
             ].map((s, i) => (
               <div
                 key={s.label}
-                className={`flex flex-col items-center px-6 py-10 ${i > 0 ? 'border-l border-white/[0.05]' : ''}`}
+                className={`flex flex-col items-center px-6 py-10 ${i > 0 ? 'border-l border-black/[0.07] dark:border-white/[0.05]' : ''}`}
               >
-                <div className="text-3xl font-extrabold text-purple-400">
+                <div className="text-3xl font-extrabold text-purple-600 dark:text-purple-400">
                   {s.value}
                 </div>
-                <div className="mt-1.5 text-sm text-white/45">{s.label}</div>
+                <div className="mt-1.5 text-sm text-gray-400 dark:text-white/45">{s.label}</div>
               </div>
             ))}
           </div>
@@ -327,13 +315,13 @@ export const Landing = () => {
           className={`mx-auto max-w-7xl px-6 ${revealClass(featuresReveal.visible)}`}
         >
           <div className="mb-16 text-center">
-            <div className="mb-3 text-xs font-bold tracking-widest text-purple-400 uppercase">
+            <div className="mb-3 text-xs font-bold tracking-widest text-purple-600 dark:text-purple-400 uppercase">
               Features
             </div>
             <h2 className="text-4xl font-extrabold tracking-tight lg:text-5xl">
               Everything you need to analyze
             </h2>
-            <p className="mt-4 text-lg text-white/50">
+            <p className="mt-4 text-lg text-gray-500 dark:text-white/50">
               The tools professionals use — now available to everyone.
             </p>
           </div>
@@ -357,13 +345,7 @@ export const Landing = () => {
               {
                 icon: (
                   <svg width="22" height="22" fill="none" viewBox="0 0 24 24">
-                    <circle
-                      cx="12"
-                      cy="12"
-                      r="9"
-                      stroke="#A855F7"
-                      strokeWidth="2"
-                    />
+                    <circle cx="12" cy="12" r="9" stroke="#A855F7" strokeWidth="2" />
                     <path
                       d="M12 7v5l3 3"
                       stroke="#A855F7"
@@ -379,42 +361,10 @@ export const Landing = () => {
               {
                 icon: (
                   <svg width="22" height="22" fill="none" viewBox="0 0 24 24">
-                    <rect
-                      x="3"
-                      y="3"
-                      width="7"
-                      height="7"
-                      rx="1.5"
-                      stroke="#A855F7"
-                      strokeWidth="2"
-                    />
-                    <rect
-                      x="14"
-                      y="3"
-                      width="7"
-                      height="7"
-                      rx="1.5"
-                      stroke="#A855F7"
-                      strokeWidth="2"
-                    />
-                    <rect
-                      x="3"
-                      y="14"
-                      width="7"
-                      height="7"
-                      rx="1.5"
-                      stroke="#A855F7"
-                      strokeWidth="2"
-                    />
-                    <rect
-                      x="14"
-                      y="14"
-                      width="7"
-                      height="7"
-                      rx="1.5"
-                      stroke="#A855F7"
-                      strokeWidth="2"
-                    />
+                    <rect x="3" y="3" width="7" height="7" rx="1.5" stroke="#A855F7" strokeWidth="2" />
+                    <rect x="14" y="3" width="7" height="7" rx="1.5" stroke="#A855F7" strokeWidth="2" />
+                    <rect x="3" y="14" width="7" height="7" rx="1.5" stroke="#A855F7" strokeWidth="2" />
+                    <rect x="14" y="14" width="7" height="7" rx="1.5" stroke="#A855F7" strokeWidth="2" />
                   </svg>
                 ),
                 title: 'Custom Dashboards',
@@ -423,13 +373,13 @@ export const Landing = () => {
             ].map((f) => (
               <div
                 key={f.title}
-                className="group rounded-2xl border border-white/[0.07] bg-white/[0.03] p-8 backdrop-blur-sm transition-all duration-300 hover:border-purple-500/30 hover:bg-white/[0.06] hover:shadow-xl hover:shadow-purple-950/30"
+                className="group rounded-2xl border border-black/[0.07] dark:border-white/[0.07] bg-black/[0.04] dark:bg-white/[0.03] p-8 backdrop-blur-sm transition-all duration-300 hover:border-purple-500/30 hover:bg-black/[0.06] dark:hover:bg-white/[0.06] hover:shadow-xl hover:shadow-purple-950/20 dark:hover:shadow-purple-950/30"
               >
                 <div className="mb-5 flex h-12 w-12 items-center justify-center rounded-xl bg-purple-500/10 ring-1 ring-purple-500/20 transition group-hover:bg-purple-500/15 group-hover:ring-purple-500/30">
                   {f.icon}
                 </div>
                 <h3 className="mb-3 text-xl font-bold">{f.title}</h3>
-                <p className="text-base leading-relaxed text-white/52">
+                <p className="text-base leading-relaxed text-gray-500 dark:text-white/52">
                   {f.desc}
                 </p>
               </div>
@@ -445,7 +395,7 @@ export const Landing = () => {
           className={`mx-auto max-w-7xl px-6 ${revealClass(howReveal.visible)}`}
         >
           <div className="mb-16 text-center">
-            <div className="mb-3 text-xs font-bold tracking-widest text-purple-400 uppercase">
+            <div className="mb-3 text-xs font-bold tracking-widest text-purple-600 dark:text-purple-400 uppercase">
               How it works
             </div>
             <h2 className="text-4xl font-extrabold tracking-tight lg:text-5xl">
@@ -472,11 +422,11 @@ export const Landing = () => {
               },
             ].map((item) => (
               <div key={item.step} className="relative pl-2">
-                <div className="mb-3 text-7xl leading-none font-black text-white/[0.05]">
+                <div className="mb-3 text-7xl leading-none font-black text-black/[0.05] dark:text-white/[0.05]">
                   {item.step}
                 </div>
                 <h3 className="mb-3 text-xl font-bold">{item.title}</h3>
-                <p className="text-base leading-relaxed text-white/52">
+                <p className="text-base leading-relaxed text-gray-500 dark:text-white/52">
                   {item.desc}
                 </p>
               </div>
@@ -491,11 +441,11 @@ export const Landing = () => {
           ref={ctaReveal.ref}
           className={`mx-auto max-w-3xl px-6 text-center ${revealClass(ctaReveal.visible)}`}
         >
-          <div className="rounded-3xl border border-purple-500/20 bg-gradient-to-b from-purple-900/25 to-transparent p-16 shadow-2xl shadow-purple-950/30 backdrop-blur-sm">
+          <div className="rounded-3xl border border-purple-500/20 bg-gradient-to-b from-purple-900/25 to-transparent p-16 shadow-2xl shadow-purple-950/20 dark:shadow-purple-950/30 backdrop-blur-sm">
             <h2 className="mb-4 text-4xl font-extrabold tracking-tight lg:text-5xl">
               Ready to find your edge?
             </h2>
-            <p className="mb-10 text-lg leading-relaxed text-white/52">
+            <p className="mb-10 text-lg leading-relaxed text-gray-500 dark:text-white/52">
               Join thousands of investors using QuantEdge to make smarter,
               data-driven decisions.
             </p>
@@ -513,21 +463,17 @@ export const Landing = () => {
       </section>
 
       {/* ── Footer ── */}
-      <footer className="border-t border-white/[0.05] py-12">
+      <footer className="border-t border-black/[0.07] dark:border-white/[0.05] py-12">
         <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-6 px-6 md:flex-row">
-          <img
-            src="/quantedge-logo.svg"
-            alt="QuantEdge"
-            className="h-6 w-auto opacity-80"
-          />
+          <Logo className="h-6 w-auto opacity-80" />
 
-          <div className="flex gap-6 text-sm text-white/40">
-            <Link to="/contact-us" className="transition hover:text-white">
+          <div className="flex gap-6 text-sm text-gray-400 dark:text-white/40">
+            <Link to="/contact-us" className="transition hover:text-gray-900 dark:hover:text-white">
               Feedback
             </Link>
           </div>
 
-          <div className="text-sm text-white/30">
+          <div className="text-sm text-gray-300 dark:text-white/30">
             © 2026 QuantEdge. All rights reserved.
           </div>
         </div>

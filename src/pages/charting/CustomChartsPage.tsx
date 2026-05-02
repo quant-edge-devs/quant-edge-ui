@@ -37,9 +37,12 @@ interface CustomChart {
   endDate: string;
 }
 
-/* ── Shared input style ── */
 const inputCls =
-  'w-full rounded-xl border border-white/[0.08] bg-white/[0.04] px-4 py-2.5 text-sm text-white placeholder-white/25 transition focus:border-purple-500/50 focus:bg-white/[0.07] focus:outline-none focus:ring-1 focus:ring-purple-500/30';
+  'w-full rounded-xl border border-black/[0.10] dark:border-white/[0.08] bg-black/[0.04] dark:bg-white/[0.04] px-4 py-2.5 text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-white/25 transition focus:border-purple-500/50 focus:bg-black/[0.06] dark:focus:bg-white/[0.07] focus:outline-none focus:ring-1 focus:ring-purple-500/30';
+
+const btnBase = 'rounded-lg px-3.5 py-2 text-sm font-medium transition';
+const btnActive = 'bg-purple-600 text-white shadow shadow-purple-900/30';
+const btnInactive = 'border border-black/[0.07] dark:border-white/[0.07] bg-black/[0.03] dark:bg-white/[0.03] text-gray-500 dark:text-white/55 hover:border-purple-500/25 hover:bg-black/[0.06] dark:hover:bg-white/[0.07] hover:text-gray-900 dark:hover:text-white';
 
 export default function CustomChartsPage() {
   const { currentUser } = useAuth();
@@ -56,7 +59,6 @@ export default function CustomChartsPage() {
   const [activeTab, setActiveTab]               = useState(0);
   const [editIdx, setEditIdx]                   = useState<number | null>(null);
 
-  /* ── Firestore sync ── */
   useEffect(() => {
     if (!currentUser) return;
     const chartsRef = collection(db, 'users', currentUser.uid, 'customCharts');
@@ -87,7 +89,6 @@ export default function CustomChartsPage() {
     });
   }, [currentUser]);
 
-  /* ── Ticker helpers ── */
   const handleAddTicker = () => {
     const t = tickerInput.trim().toUpperCase();
     if (t && !tickers.includes(t)) setTickers((prev) => [...prev, t]);
@@ -96,7 +97,6 @@ export default function CustomChartsPage() {
   const handleRemoveTicker = (t: string) =>
     setTickers((prev) => prev.filter((tk) => tk !== t));
 
-  /* ── CRUD ── */
   const handleAddOrUpdateChart = async () => {
     const chart: CustomChart = {
       title, tickers,
@@ -164,7 +164,6 @@ export default function CustomChartsPage() {
     setSelectedChartType(CHART_TYPES[0]);
   };
 
-  /* ── Chart renderer ── */
   const renderChart = (chart: CustomChart, idx: number) => {
     const { tickers, metric, chartType, startDate, endDate } = chart;
     if (!tickers?.length || !metric || !chartType) return null;
@@ -175,8 +174,7 @@ export default function CustomChartsPage() {
   const activeChart = customCharts[activeTab];
 
   return (
-    <div className="flex min-h-screen flex-col bg-[#06050f] text-white">
-      {/* Ambient orbs */}
+    <div className="flex min-h-screen flex-col bg-[#f5f3ff] dark:bg-[#06050f] text-gray-900 dark:text-white">
       <div className="pointer-events-none fixed inset-0 overflow-hidden">
         <div className="absolute -top-48 -left-48 h-[600px] w-[600px] rounded-full bg-purple-700/15 blur-[140px]" />
         <div className="absolute bottom-0 right-0 h-[400px] w-[400px] rounded-full bg-violet-600/10 blur-[120px]" />
@@ -185,12 +183,10 @@ export default function CustomChartsPage() {
       <ChartingNavbar activeMode="custom" />
 
       <main className="relative mx-auto flex w-full max-w-7xl flex-1 flex-col gap-6 px-6 py-8">
-
-        {/* Page header */}
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-extrabold tracking-tight">Custom Charts</h1>
-            <p className="mt-1 text-sm text-white/45">
+            <p className="mt-1 text-sm text-gray-500 dark:text-white/45">
               Build and save personalized analytics dashboards to your account.
             </p>
           </div>
@@ -202,9 +198,8 @@ export default function CustomChartsPage() {
           </button>
         </div>
 
-        {/* Empty state */}
         {customCharts.length === 0 ? (
-          <div className="flex flex-1 flex-col items-center justify-center gap-6 rounded-2xl border border-white/[0.07] bg-white/[0.03] py-24 text-center backdrop-blur-sm">
+          <div className="flex flex-1 flex-col items-center justify-center gap-6 rounded-2xl border border-black/[0.07] dark:border-white/[0.07] bg-black/[0.04] dark:bg-white/[0.03] py-24 text-center backdrop-blur-sm">
             <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-purple-500/10 ring-1 ring-purple-500/20">
               <svg width="28" height="28" fill="none" viewBox="0 0 24 24">
                 <rect x="3"  y="3"  width="7" height="7" rx="1.5" stroke="#A855F7" strokeWidth="2" />
@@ -214,8 +209,8 @@ export default function CustomChartsPage() {
               </svg>
             </div>
             <div>
-              <div className="text-base font-semibold text-white/60">No charts yet</div>
-              <div className="mt-1 text-sm text-white/30">Create your first chart to start building your dashboard</div>
+              <div className="text-base font-semibold text-gray-500 dark:text-white/60">No charts yet</div>
+              <div className="mt-1 text-sm text-gray-400 dark:text-white/30">Create your first chart to start building your dashboard</div>
             </div>
             <button
               onClick={() => setShowModal(true)}
@@ -224,12 +219,11 @@ export default function CustomChartsPage() {
               <FaPlus className="text-xs" /> Create your first chart
             </button>
             {!currentUser && (
-              <p className="text-xs text-white/25">Sign in to save charts across sessions</p>
+              <p className="text-xs text-gray-300 dark:text-white/25">Sign in to save charts across sessions</p>
             )}
           </div>
         ) : (
           <>
-            {/* Tab strip */}
             <div className="flex items-center gap-2 overflow-x-auto pb-1">
               {customCharts.map((chart, idx) => (
                 <div
@@ -237,7 +231,7 @@ export default function CustomChartsPage() {
                   className={`group flex shrink-0 items-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold transition ${
                     activeTab === idx
                       ? 'bg-purple-600 text-white shadow shadow-purple-900/30'
-                      : 'border border-white/[0.07] bg-white/[0.03] text-white/55 hover:border-purple-500/25 hover:bg-white/[0.07] hover:text-white'
+                      : 'border border-black/[0.07] dark:border-white/[0.07] bg-black/[0.03] dark:bg-white/[0.03] text-gray-500 dark:text-white/55 hover:border-purple-500/25 hover:bg-black/[0.06] dark:hover:bg-white/[0.07] hover:text-gray-900 dark:hover:text-white'
                   }`}
                 >
                   <button
@@ -246,18 +240,16 @@ export default function CustomChartsPage() {
                   >
                     {chart.title || chart.tickers?.join(', ') || `Chart ${idx + 1}`}
                   </button>
-                  {/* Edit */}
                   <button
                     onClick={(e) => { e.stopPropagation(); openEditModal(idx); }}
-                    className={`opacity-0 transition group-hover:opacity-100 ${activeTab === idx ? 'text-white/70 hover:text-white' : 'text-white/30 hover:text-white/70'}`}
+                    className={`opacity-0 transition group-hover:opacity-100 ${activeTab === idx ? 'text-white/70 hover:text-white' : 'text-gray-400 dark:text-white/30 hover:text-gray-700 dark:hover:text-white/70'}`}
                     title="Edit chart"
                   >
                     <FaEdit className="text-xs" />
                   </button>
-                  {/* Delete */}
                   <button
                     onClick={(e) => { e.stopPropagation(); handleDeleteChart(idx); }}
-                    className={`opacity-0 transition group-hover:opacity-100 ${activeTab === idx ? 'text-red-300 hover:text-red-200' : 'text-white/30 hover:text-red-400'}`}
+                    className={`opacity-0 transition group-hover:opacity-100 ${activeTab === idx ? 'text-red-300 hover:text-red-200' : 'text-gray-400 dark:text-white/30 hover:text-red-500 dark:hover:text-red-400'}`}
                     title="Delete chart"
                   >
                     <FaTrash className="text-xs" />
@@ -266,29 +258,27 @@ export default function CustomChartsPage() {
               ))}
             </div>
 
-            {/* Active chart metadata strip */}
             {activeChart && (
-              <div className="flex flex-wrap items-center gap-3 text-xs text-white/35">
+              <div className="flex flex-wrap items-center gap-3 text-xs text-gray-400 dark:text-white/35">
                 {activeChart.tickers.map((t) => (
-                  <span key={t} className="rounded-md bg-purple-500/15 px-2 py-0.5 font-semibold text-purple-300 ring-1 ring-purple-500/20">
+                  <span key={t} className="rounded-md bg-purple-500/15 px-2 py-0.5 font-semibold text-purple-600 dark:text-purple-300 ring-1 ring-purple-500/20">
                     {t}
                   </span>
                 ))}
-                <span className="text-white/20">·</span>
+                <span className="text-gray-300 dark:text-white/20">·</span>
                 <span>{activeChart.metric}</span>
-                <span className="text-white/20">·</span>
+                <span className="text-gray-300 dark:text-white/20">·</span>
                 <span>{activeChart.chartType}</span>
                 {activeChart.startDate && (
                   <>
-                    <span className="text-white/20">·</span>
+                    <span className="text-gray-300 dark:text-white/20">·</span>
                     <span>{activeChart.startDate} → {activeChart.endDate || 'present'}</span>
                   </>
                 )}
               </div>
             )}
 
-            {/* Chart area */}
-            <div className="relative min-h-[520px] flex-1 rounded-2xl border border-white/[0.07] bg-white/[0.03] backdrop-blur-sm">
+            <div className="relative min-h-[520px] flex-1 rounded-2xl border border-black/[0.07] dark:border-white/[0.07] bg-black/[0.04] dark:bg-white/[0.03] backdrop-blur-sm">
               <div className="absolute inset-0 p-4">
                 {activeChart ? renderChart(activeChart, activeTab) : null}
               </div>
@@ -297,18 +287,16 @@ export default function CustomChartsPage() {
         )}
       </main>
 
-      {/* ── Create / Edit modal ── */}
       {showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4 backdrop-blur-sm">
-          <div className="relative w-full max-w-2xl overflow-y-auto rounded-2xl border border-white/[0.09] bg-[#0d0b1e] p-8 shadow-2xl shadow-purple-950/50 max-h-[90vh]">
+          <div className="relative w-full max-w-2xl overflow-y-auto rounded-2xl border border-black/[0.09] dark:border-white/[0.09] bg-white dark:bg-[#0d0b1e] p-8 shadow-2xl shadow-purple-950/30 dark:shadow-purple-950/50 max-h-[90vh]">
 
-            {/* Modal header */}
             <div className="mb-6 flex items-center justify-between">
               <div>
                 <h2 className="text-xl font-bold">
                   {editIdx !== null ? 'Edit Chart' : 'New Chart'}
                 </h2>
-                <p className="mt-0.5 text-sm text-white/40">
+                <p className="mt-0.5 text-sm text-gray-400 dark:text-white/40">
                   {editIdx !== null
                     ? 'Update the settings for this chart'
                     : 'Configure your chart — it will be saved to your account'}
@@ -316,17 +304,15 @@ export default function CustomChartsPage() {
               </div>
               <button
                 onClick={closeModal}
-                className="flex h-8 w-8 items-center justify-center rounded-lg text-white/40 transition hover:bg-white/[0.07] hover:text-white"
+                className="flex h-8 w-8 items-center justify-center rounded-lg text-gray-400 dark:text-white/40 transition hover:bg-black/[0.06] dark:hover:bg-white/[0.07] hover:text-gray-900 dark:hover:text-white"
               >
                 <FaTimes />
               </button>
             </div>
 
             <div className="flex flex-col gap-5">
-
-              {/* Title */}
               <div>
-                <label className="mb-1.5 block text-xs font-semibold uppercase tracking-widest text-white/40">
+                <label className="mb-1.5 block text-xs font-semibold uppercase tracking-widest text-gray-400 dark:text-white/40">
                   Chart Title
                 </label>
                 <input
@@ -337,9 +323,8 @@ export default function CustomChartsPage() {
                 />
               </div>
 
-              {/* Tickers */}
               <div>
-                <label className="mb-1.5 block text-xs font-semibold uppercase tracking-widest text-white/40">
+                <label className="mb-1.5 block text-xs font-semibold uppercase tracking-widest text-gray-400 dark:text-white/40">
                   Stock Tickers
                 </label>
                 <div className="flex gap-2">
@@ -363,13 +348,13 @@ export default function CustomChartsPage() {
                     {tickers.map((t) => (
                       <span
                         key={t}
-                        className="flex items-center gap-1.5 rounded-lg bg-purple-500/15 px-3 py-1 text-xs font-semibold text-purple-300 ring-1 ring-purple-500/20"
+                        className="flex items-center gap-1.5 rounded-lg bg-purple-500/15 px-3 py-1 text-xs font-semibold text-purple-600 dark:text-purple-300 ring-1 ring-purple-500/20"
                       >
                         {t}
                         <button
                           type="button"
                           onClick={() => handleRemoveTicker(t)}
-                          className="text-purple-400/60 transition hover:text-red-400"
+                          className="text-purple-500/60 dark:text-purple-400/60 transition hover:text-red-500 dark:hover:text-red-400"
                         >
                           <FaTimes className="text-[10px]" />
                         </button>
@@ -379,9 +364,8 @@ export default function CustomChartsPage() {
                 )}
               </div>
 
-              {/* Metric */}
               <div>
-                <label className="mb-1.5 block text-xs font-semibold uppercase tracking-widest text-white/40">
+                <label className="mb-1.5 block text-xs font-semibold uppercase tracking-widest text-gray-400 dark:text-white/40">
                   Metric
                 </label>
                 <div className="flex flex-wrap gap-2">
@@ -390,24 +374,19 @@ export default function CustomChartsPage() {
                       key={m.label}
                       type="button"
                       onClick={() => setSelectedMetric(m.label)}
-                      className={`rounded-lg px-3.5 py-2 text-sm font-medium transition ${
-                        selectedMetric === m.label
-                          ? 'bg-purple-600 text-white shadow shadow-purple-900/30'
-                          : 'border border-white/[0.07] bg-white/[0.03] text-white/55 hover:border-purple-500/25 hover:bg-white/[0.07] hover:text-white'
-                      }`}
+                      className={`${btnBase} ${selectedMetric === m.label ? btnActive : btnInactive}`}
                     >
                       {m.label}
                     </button>
                   ))}
                 </div>
-                <p className="mt-1.5 text-xs text-white/30">
+                <p className="mt-1.5 text-xs text-gray-400 dark:text-white/30">
                   {METRICS.find((m) => m.label === selectedMetric)?.sub}
                 </p>
               </div>
 
-              {/* Chart Type */}
               <div>
-                <label className="mb-1.5 block text-xs font-semibold uppercase tracking-widest text-white/40">
+                <label className="mb-1.5 block text-xs font-semibold uppercase tracking-widest text-gray-400 dark:text-white/40">
                   Chart Type
                 </label>
                 <div className="flex gap-2">
@@ -416,11 +395,7 @@ export default function CustomChartsPage() {
                       key={type}
                       type="button"
                       onClick={() => setSelectedChartType(type)}
-                      className={`rounded-lg px-4 py-2 text-sm font-semibold transition ${
-                        selectedChartType === type
-                          ? 'bg-purple-600 text-white shadow shadow-purple-900/30'
-                          : 'border border-white/[0.07] bg-white/[0.03] text-white/55 hover:border-purple-500/25 hover:bg-white/[0.07] hover:text-white'
-                      }`}
+                      className={`rounded-lg px-4 py-2 text-sm font-semibold transition ${selectedChartType === type ? btnActive : btnInactive}`}
                     >
                       {type}
                     </button>
@@ -428,10 +403,9 @@ export default function CustomChartsPage() {
                 </div>
               </div>
 
-              {/* Date range */}
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="mb-1.5 block text-xs font-semibold uppercase tracking-widest text-white/40">
+                  <label className="mb-1.5 block text-xs font-semibold uppercase tracking-widest text-gray-400 dark:text-white/40">
                     Start Date
                   </label>
                   <input
@@ -442,7 +416,7 @@ export default function CustomChartsPage() {
                   />
                 </div>
                 <div>
-                  <label className="mb-1.5 block text-xs font-semibold uppercase tracking-widest text-white/40">
+                  <label className="mb-1.5 block text-xs font-semibold uppercase tracking-widest text-gray-400 dark:text-white/40">
                     End Date
                   </label>
                   <input
@@ -454,12 +428,11 @@ export default function CustomChartsPage() {
                 </div>
               </div>
 
-              {/* Actions */}
               <div className="flex justify-end gap-3 pt-2">
                 <button
                   type="button"
                   onClick={closeModal}
-                  className="rounded-xl border border-white/[0.08] px-5 py-2.5 text-sm font-semibold text-white/60 transition hover:border-white/20 hover:text-white"
+                  className="rounded-xl border border-black/[0.08] dark:border-white/[0.08] px-5 py-2.5 text-sm font-semibold text-gray-500 dark:text-white/60 transition hover:border-black/[0.18] dark:hover:border-white/20 hover:text-gray-900 dark:hover:text-white"
                 >
                   Cancel
                 </button>

@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { useTheme } from '../../../contexts/ThemeContext';
 import * as d3 from 'd3';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
@@ -134,6 +135,8 @@ const BarChart = ({
   const [primaryData, setPrimaryData] = useState<Series[]>([]);
   const [secondaryData, setSecondaryData] = useState<Series[]>([]);
   const lastParams = useRef('');
+  const { theme } = useTheme();
+  const isDark = theme === 'dark';
 
   /* ── Resize observer ── */
   useEffect(() => {
@@ -294,6 +297,13 @@ const BarChart = ({
       .append('g')
       .attr('transform', `translate(${margin.left},${margin.top})`);
 
+    const textColor = isDark ? 'rgba(255,255,255,0.38)' : 'rgba(30,27,75,0.5)';
+    const gridColor = isDark ? 'rgba(255,255,255,0.06)' : 'rgba(30,27,75,0.08)';
+    const axisTitleColor = isDark ? 'rgba(255,255,255,0.35)' : 'rgba(30,27,75,0.45)';
+    const legendTextColor = isDark ? 'rgba(255,255,255,0.55)' : 'rgba(30,27,75,0.6)';
+    const tooltipBg = isDark ? 'rgba(10,8,20,0.92)' : 'rgba(255,255,255,0.96)';
+    const tooltipTextColor = isDark ? '#e2e8f0' : '#1a1a2e';
+
     /* ── Grid lines ── */
     y.ticks(5).forEach((tick) => {
       plot
@@ -302,7 +312,7 @@ const BarChart = ({
         .attr('x2', innerW)
         .attr('y1', y(tick))
         .attr('y2', y(tick))
-        .attr('stroke', 'rgba(255,255,255,0.06)')
+        .attr('stroke', gridColor)
         .attr('stroke-dasharray', '4,4');
     });
 
@@ -317,7 +327,7 @@ const BarChart = ({
     yAxis.selectAll('.tick line').remove();
     yAxis
       .selectAll('.tick text')
-      .attr('fill', 'rgba(255,255,255,0.38)')
+      .attr('fill', textColor)
       .attr('font-size', '12px')
       .attr('font-family', 'inherit');
 
@@ -353,7 +363,7 @@ const BarChart = ({
     xAxis.selectAll('.tick line').remove();
     xAxis
       .selectAll('.tick text')
-      .attr('fill', 'rgba(255,255,255,0.38)')
+      .attr('fill', textColor)
       .attr('font-size', '11px')
       .attr('font-family', 'inherit')
       .attr('transform', 'rotate(-38)')
@@ -368,7 +378,7 @@ const BarChart = ({
       .attr('x', -(margin.top + innerH / 2))
       .attr('y', 14)
       .attr('text-anchor', 'middle')
-      .attr('fill', 'rgba(255,255,255,0.35)')
+      .attr('fill', axisTitleColor)
       .attr('font-size', '11px')
       .attr('font-family', 'inherit')
       .text(metric);
@@ -379,7 +389,7 @@ const BarChart = ({
       .attr('x', innerW / 2)
       .attr('y', innerH + 64)
       .attr('text-anchor', 'middle')
-      .attr('fill', 'rgba(255,255,255,0.35)')
+      .attr('fill', axisTitleColor)
       .attr('font-size', '11px')
       .attr('font-family', 'inherit')
       .text(interval === 'annual' ? 'Year' : 'Month');
@@ -402,9 +412,9 @@ const BarChart = ({
       .select(container)
       .append('div')
       .style('position', 'absolute')
-      .style('background', 'rgba(10,8,20,0.92)')
+      .style('background', tooltipBg)
       .style('border', '1px solid rgba(168,85,247,0.3)')
-      .style('color', '#e2e8f0')
+      .style('color', tooltipTextColor)
       .style('padding', '10px 14px')
       .style('border-radius', '10px')
       .style('font-size', '13px')
@@ -492,7 +502,7 @@ const BarChart = ({
               tooltip
                 .style('opacity', '1')
                 .html(
-                  `<div style="margin-bottom:4px;font-size:11px;color:rgba(255,255,255,0.4)">${dateLabel(dateKey, interval)}</div>` +
+                  `<div style="margin-bottom:4px;font-size:11px;color:${isDark ? 'rgba(255,255,255,0.4)' : 'rgba(30,27,75,0.5)'}">${dateLabel(dateKey, interval)}</div>` +
                     `<span style="color:${color}">${ticker} (${secondaryMetric})</span>: ${formatAbbrev(pt.value)}`
                 )
                 .style(
@@ -541,12 +551,12 @@ const BarChart = ({
         .attr('x', 18)
         .attr('y', 12)
         .attr('font-size', '12px')
-        .attr('fill', 'rgba(255,255,255,0.55)')
+        .attr('fill', legendTextColor)
         .attr('font-family', 'inherit')
         .text(label);
       lx += label.length * 7.2 + 32;
     });
-  }, [primaryData, secondaryData, dimensions.width, dimensions.height]);
+  }, [primaryData, secondaryData, dimensions.width, dimensions.height, isDark]);
 
   return (
     <div

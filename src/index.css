@@ -1,5 +1,7 @@
 @import 'tailwindcss';
 
+@variant dark (&:where(.dark, .dark *));
+
 *,
 *::before,
 *::after {
@@ -13,9 +15,11 @@
 html {
   font-size: 16px;
   scroll-behavior: smooth;
+  transition: background-color 0.25s;
 }
 
 body {
+  transition: background-color 0.25s, color 0.25s;
   font-family:
     'Inter',
     system-ui,

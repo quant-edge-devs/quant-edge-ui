@@ -4,6 +4,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { Link, useNavigate } from 'react-router';
 import { useState } from 'react';
 import { updateProfile } from 'firebase/auth';
+import { Logo } from '../../components/Logo';
 
 const GoogleIcon = () => (
   <svg className="mr-2 h-4 w-4" viewBox="0 0 24 24">
@@ -14,6 +15,7 @@ const GoogleIcon = () => (
   </svg>
 );
 
+const fieldCls = 'w-full rounded-xl border border-black/[0.10] dark:border-white/[0.08] bg-black/[0.04] dark:bg-white/[0.04] px-3.5 py-2.5 text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-white/20 transition focus:border-purple-500/50 focus:bg-black/[0.06] dark:focus:bg-white/[0.06] focus:outline-none';
 
 export const SignUp = () => {
   const { signup, loginWithGoogle } = useAuth();
@@ -22,26 +24,23 @@ export const SignUp = () => {
   const [loading, setLoading] = useState(false);
 
   return (
-    <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-[#06050f] px-4 py-12">
-      {/* Ambient orbs */}
+    <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-[#f5f3ff] dark:bg-[#06050f] px-4 py-12">
       <div className="pointer-events-none fixed inset-0 overflow-hidden">
         <div className="absolute -top-40 -left-40 h-[600px] w-[600px] rounded-full bg-purple-600/10 blur-[120px]" />
         <div className="absolute -bottom-32 -right-32 h-[500px] w-[500px] rounded-full bg-indigo-600/8 blur-[100px]" />
       </div>
 
-      {/* Card */}
       <div className="relative z-10 w-full max-w-sm animate-fade-up">
-        {/* Logo */}
         <Link to="/" className="mb-8 block">
-          <img src="/quantedge-logo.svg" alt="QuantEdge" className="h-8 w-auto" />
+          <Logo className="h-8 w-auto" />
         </Link>
 
-        <div className="rounded-2xl border border-white/[0.07] bg-white/[0.03] p-8 backdrop-blur-sm">
-          <h1 className="mb-1 text-2xl font-semibold text-white">Create your account</h1>
-          <p className="mb-7 text-sm text-white/45">Start analyzing markets today</p>
+        <div className="rounded-2xl border border-black/[0.07] dark:border-white/[0.07] bg-black/[0.04] dark:bg-white/[0.03] p-8 backdrop-blur-sm">
+          <h1 className="mb-1 text-2xl font-semibold text-gray-900 dark:text-white">Create your account</h1>
+          <p className="mb-7 text-sm text-gray-500 dark:text-white/45">Start analyzing markets today</p>
 
           {error && (
-            <div className="mb-4 rounded-lg border border-red-500/20 bg-red-500/10 px-3 py-2 text-xs text-red-400">
+            <div className="mb-4 rounded-lg border border-red-500/20 bg-red-500/10 px-3 py-2 text-xs text-red-500 dark:text-red-400">
               {error}
             </div>
           )}
@@ -84,75 +83,44 @@ export const SignUp = () => {
           >
             {({ isSubmitting, errors, touched }) => (
               <Form className="flex flex-col gap-4">
-                {/* First / Last name row */}
                 <div className="grid grid-cols-2 gap-3">
                   <div className="flex flex-col gap-1.5">
-                    <label className="text-xs font-medium text-white/60" htmlFor="firstName">First name</label>
-                    <Field
-                      id="firstName"
-                      name="firstName"
-                      type="text"
-                      placeholder="Jane"
-                      className="w-full rounded-xl border border-white/[0.08] bg-white/[0.04] px-3.5 py-2.5 text-sm text-white placeholder-white/20 transition focus:border-purple-500/50 focus:bg-white/[0.06] focus:outline-none"
-                    />
+                    <label className="text-xs font-medium text-gray-500 dark:text-white/60" htmlFor="firstName">First name</label>
+                    <Field id="firstName" name="firstName" type="text" placeholder="Jane" className={fieldCls} />
                     {errors.firstName && touched.firstName && (
-                      <span className="text-[11px] text-red-400">{errors.firstName}</span>
+                      <span className="text-[11px] text-red-500 dark:text-red-400">{errors.firstName}</span>
                     )}
                   </div>
                   <div className="flex flex-col gap-1.5">
-                    <label className="text-xs font-medium text-white/60" htmlFor="lastName">Last name</label>
-                    <Field
-                      id="lastName"
-                      name="lastName"
-                      type="text"
-                      placeholder="Doe"
-                      className="w-full rounded-xl border border-white/[0.08] bg-white/[0.04] px-3.5 py-2.5 text-sm text-white placeholder-white/20 transition focus:border-purple-500/50 focus:bg-white/[0.06] focus:outline-none"
-                    />
+                    <label className="text-xs font-medium text-gray-500 dark:text-white/60" htmlFor="lastName">Last name</label>
+                    <Field id="lastName" name="lastName" type="text" placeholder="Doe" className={fieldCls} />
                     {errors.lastName && touched.lastName && (
-                      <span className="text-[11px] text-red-400">{errors.lastName}</span>
+                      <span className="text-[11px] text-red-500 dark:text-red-400">{errors.lastName}</span>
                     )}
                   </div>
                 </div>
 
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-medium text-white/60" htmlFor="email">Email</label>
-                  <Field
-                    id="email"
-                    name="email"
-                    type="email"
-                    placeholder="you@example.com"
-                    className="w-full rounded-xl border border-white/[0.08] bg-white/[0.04] px-3.5 py-2.5 text-sm text-white placeholder-white/20 transition focus:border-purple-500/50 focus:bg-white/[0.06] focus:outline-none"
-                  />
+                  <label className="text-xs font-medium text-gray-500 dark:text-white/60" htmlFor="email">Email</label>
+                  <Field id="email" name="email" type="email" placeholder="you@example.com" className={fieldCls} />
                   {errors.email && touched.email && (
-                    <span className="text-[11px] text-red-400">{errors.email}</span>
+                    <span className="text-[11px] text-red-500 dark:text-red-400">{errors.email}</span>
                   )}
                 </div>
 
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-medium text-white/60" htmlFor="password">Password</label>
-                  <Field
-                    id="password"
-                    name="password"
-                    type="password"
-                    placeholder="••••••••"
-                    className="w-full rounded-xl border border-white/[0.08] bg-white/[0.04] px-3.5 py-2.5 text-sm text-white placeholder-white/20 transition focus:border-purple-500/50 focus:bg-white/[0.06] focus:outline-none"
-                  />
+                  <label className="text-xs font-medium text-gray-500 dark:text-white/60" htmlFor="password">Password</label>
+                  <Field id="password" name="password" type="password" placeholder="••••••••" className={fieldCls} />
                   {errors.password && touched.password && (
-                    <span className="text-[11px] text-red-400">{errors.password}</span>
+                    <span className="text-[11px] text-red-500 dark:text-red-400">{errors.password}</span>
                   )}
                 </div>
 
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-medium text-white/60" htmlFor="confirmPassword">Confirm password</label>
-                  <Field
-                    id="confirmPassword"
-                    name="confirmPassword"
-                    type="password"
-                    placeholder="••••••••"
-                    className="w-full rounded-xl border border-white/[0.08] bg-white/[0.04] px-3.5 py-2.5 text-sm text-white placeholder-white/20 transition focus:border-purple-500/50 focus:bg-white/[0.06] focus:outline-none"
-                  />
+                  <label className="text-xs font-medium text-gray-500 dark:text-white/60" htmlFor="confirmPassword">Confirm password</label>
+                  <Field id="confirmPassword" name="confirmPassword" type="password" placeholder="••••••••" className={fieldCls} />
                   {errors.confirmPassword && touched.confirmPassword && (
-                    <span className="text-[11px] text-red-400">{errors.confirmPassword}</span>
+                    <span className="text-[11px] text-red-500 dark:text-red-400">{errors.confirmPassword}</span>
                   )}
                 </div>
 
@@ -164,24 +132,24 @@ export const SignUp = () => {
                   {loading ? 'Creating account…' : 'Create account'}
                 </Button>
 
-                <div className="flex items-center gap-3 text-white/20">
-                  <span className="h-px flex-1 bg-white/[0.06]" />
+                <div className="flex items-center gap-3 text-gray-300 dark:text-white/20">
+                  <span className="h-px flex-1 bg-black/[0.08] dark:bg-white/[0.06]" />
                   <span className="text-xs">or</span>
-                  <span className="h-px flex-1 bg-white/[0.06]" />
+                  <span className="h-px flex-1 bg-black/[0.08] dark:bg-white/[0.06]" />
                 </div>
 
                 <Button
                   type="button"
-                  className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl border border-white/[0.08] bg-white/[0.03] py-2.5 text-sm text-white/70 transition hover:bg-white/[0.06] hover:text-white"
+                  className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl border border-black/[0.08] dark:border-white/[0.08] bg-black/[0.03] dark:bg-white/[0.03] py-2.5 text-sm text-gray-600 dark:text-white/70 transition hover:bg-black/[0.06] dark:hover:bg-white/[0.06] hover:text-gray-900 dark:hover:text-white"
                   onClick={loginWithGoogle}
                 >
                   <GoogleIcon />
                   Continue with Google
                 </Button>
 
-                <p className="text-center text-xs text-white/35">
+                <p className="text-center text-xs text-gray-400 dark:text-white/35">
                   Already have an account?{' '}
-                  <Link to="/auth/log-in" className="text-purple-400 hover:text-purple-300">
+                  <Link to="/auth/log-in" className="text-purple-500 dark:text-purple-400 hover:text-purple-400 dark:hover:text-purple-300">
                     Sign in
                   </Link>
                 </p>

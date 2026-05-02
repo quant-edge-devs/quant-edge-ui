@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { useTheme } from '../../../contexts/ThemeContext';
 import * as d3 from 'd3';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
@@ -134,6 +135,8 @@ const LineChart = ({
   const [primaryData, setPrimaryData] = useState<Series[]>([]);
   const [secondaryData, setSecondaryData] = useState<Series[]>([]);
   const lastParams = useRef('');
+  const { theme } = useTheme();
+  const isDark = theme === 'dark';
 
   /* ── Resize observer ── */
   useEffect(() => {
@@ -300,6 +303,14 @@ const LineChart = ({
       .append('g')
       .attr('transform', `translate(${margin.left},${margin.top})`);
 
+    const textColor = isDark ? 'rgba(255,255,255,0.38)' : 'rgba(30,27,75,0.5)';
+    const gridColor = isDark ? 'rgba(255,255,255,0.06)' : 'rgba(30,27,75,0.08)';
+    const axisTitleColor = isDark ? 'rgba(255,255,255,0.35)' : 'rgba(30,27,75,0.45)';
+    const legendTextColor = isDark ? 'rgba(255,255,255,0.55)' : 'rgba(30,27,75,0.6)';
+    const tooltipBg = isDark ? 'rgba(10,8,20,0.92)' : 'rgba(255,255,255,0.96)';
+    const tooltipTextColor = isDark ? '#e2e8f0' : '#1a1a2e';
+    const dotStroke = isDark ? 'rgba(6,5,15,0.8)' : 'rgba(245,243,255,0.9)';
+
     /* ── Grid lines ── */
     y.ticks(5).forEach((tick) => {
       g.append('line')
@@ -307,7 +318,7 @@ const LineChart = ({
         .attr('x2', innerW)
         .attr('y1', y(tick))
         .attr('y2', y(tick))
-        .attr('stroke', 'rgba(255,255,255,0.06)')
+        .attr('stroke', gridColor)
         .attr('stroke-dasharray', '4,4');
     });
 
@@ -323,7 +334,7 @@ const LineChart = ({
     yAxis.selectAll('.tick line').remove();
     yAxis
       .selectAll('.tick text')
-      .attr('fill', 'rgba(255,255,255,0.38)')
+      .attr('fill', textColor)
       .attr('font-size', '12px')
       .attr('font-family', 'inherit');
 
@@ -361,7 +372,7 @@ const LineChart = ({
     xAxis.selectAll('.tick line').remove();
     xAxis
       .selectAll('.tick text')
-      .attr('fill', 'rgba(255,255,255,0.38)')
+      .attr('fill', textColor)
       .attr('font-size', '11px')
       .attr('font-family', 'inherit')
       .attr('transform', 'rotate(-38)')
@@ -376,7 +387,7 @@ const LineChart = ({
       .attr('x', -(margin.top + innerH / 2))
       .attr('y', 14)
       .attr('text-anchor', 'middle')
-      .attr('fill', 'rgba(255,255,255,0.35)')
+      .attr('fill', axisTitleColor)
       .attr('font-size', '11px')
       .attr('font-family', 'inherit')
       .text(metric);
@@ -386,7 +397,7 @@ const LineChart = ({
       .attr('x', innerW / 2)
       .attr('y', innerH + 64)
       .attr('text-anchor', 'middle')
-      .attr('fill', 'rgba(255,255,255,0.35)')
+      .attr('fill', axisTitleColor)
       .attr('font-size', '11px')
       .attr('font-family', 'inherit')
       .text(interval === 'annual' ? 'Year' : 'Month');
@@ -457,7 +468,7 @@ const LineChart = ({
         .attr('cy', (d) => y(d.value))
         .attr('r', 2.5)
         .attr('fill', color)
-        .attr('stroke', 'rgba(6,5,15,0.8)')
+        .attr('stroke', dotStroke)
         .attr('stroke-width', 1.5);
     });
 
@@ -491,9 +502,9 @@ const LineChart = ({
       .select(container)
       .append('div')
       .style('position', 'absolute')
-      .style('background', 'rgba(10,8,20,0.92)')
+      .style('background', tooltipBg)
       .style('border', '1px solid rgba(168,85,247,0.3)')
-      .style('color', '#e2e8f0')
+      .style('color', tooltipTextColor)
       .style('padding', '10px 14px')
       .style('border-radius', '10px')
       .style('font-size', '13px')
@@ -548,7 +559,7 @@ const LineChart = ({
         tooltip
           .style('opacity', '1')
           .html(
-            `<div style="margin-bottom:4px;font-size:11px;color:rgba(255,255,255,0.4)">${label}</div>${lines.join('<br/>')}`
+            `<div style="margin-bottom:4px;font-size:11px;color:${isDark ? 'rgba(255,255,255,0.4)' : 'rgba(30,27,75,0.5)'}">${label}</div>${lines.join('<br/>')}`
           )
           .style(
             'left',
@@ -596,12 +607,12 @@ const LineChart = ({
         .attr('x', 22)
         .attr('y', 11)
         .attr('font-size', '12px')
-        .attr('fill', 'rgba(255,255,255,0.55)')
+        .attr('fill', legendTextColor)
         .attr('font-family', 'inherit')
         .text(label);
       lx += label.length * 7.2 + 36;
     });
-  }, [primaryData, secondaryData, dimensions.width, dimensions.height]);
+  }, [primaryData, secondaryData, dimensions.width, dimensions.height, isDark]);
 
   return (
     <div

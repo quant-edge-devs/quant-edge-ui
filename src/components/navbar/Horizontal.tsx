@@ -17,7 +17,7 @@ export const HorizontalNavbar = ({ links }: HorizontalNavbarProps) => {
           </h1>
         </Link>
         {currentUser && (
-          <span className="ml-6 text-lg font-medium text-white">
+          <span className="ml-6 text-lg font-medium text-gray-900 dark:text-white">
             Hello, {currentUser.displayName || currentUser.email || 'User'}
           </span>
         )}
@@ -25,14 +25,14 @@ export const HorizontalNavbar = ({ links }: HorizontalNavbarProps) => {
       <nav className="flex items-center gap-4">
         <ul className="flex space-x-5 text-xl xl:text-2xl">
           {links.map((link) => (
-            <li key={link.to} className="text-xl text-white">
+            <li key={link.to} className="text-xl text-gray-900 dark:text-white">
               <NavLink
                 to={link.to}
                 className={({ isActive }) =>
                   `cursor-pointer rounded-full px-4 py-2 transition-colors ${
                     isActive
-                      ? 'bg-[rgba(229,231,235,0.2)]'
-                      : 'hover:bg-[rgba(229,231,235,0.2)]'
+                      ? 'bg-[rgba(0,0,0,0.08)] dark:bg-[rgba(229,231,235,0.2)]'
+                      : 'hover:bg-[rgba(0,0,0,0.08)] dark:hover:bg-[rgba(229,231,235,0.2)]'
                   }`
                 }
               >
@@ -41,7 +41,6 @@ export const HorizontalNavbar = ({ links }: HorizontalNavbarProps) => {
             </li>
           ))}
         </ul>
-        {/* Logout button on horizontal navbar */}
         {currentUser && (
           <button
             className="ml-4 flex items-center gap-2 rounded bg-fuchsia-600 px-4 py-2 text-white hover:bg-fuchsia-700"

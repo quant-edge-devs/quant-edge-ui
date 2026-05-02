@@ -14,11 +14,11 @@ export default function VerticalNavbar({
 
   return (
     <div
-      className={`h-screen border-r border-fuchsia-700/40 bg-[#181425] transition-all duration-300 ${collapsed ? 'w-20' : 'w-45'} flex flex-col`}
+      className={`h-screen border-r border-black/[0.08] dark:border-fuchsia-700/40 bg-[#ede9ff] dark:bg-[#181425] transition-all duration-300 ${collapsed ? 'w-20' : 'w-45'} flex flex-col`}
     >
       {collapsible && (
         <button
-          className="cursor-pointer p-4 text-fuchsia-400 focus:outline-none"
+          className="cursor-pointer p-4 text-fuchsia-500 dark:text-fuchsia-400 focus:outline-none"
           onClick={() => setCollapsed((c) => !c)}
           aria-label="Toggle navbar"
         >
@@ -28,14 +28,14 @@ export default function VerticalNavbar({
       <nav className="mt-4 flex flex-col gap-4">
         <a
           href="/charting"
-          className="flex items-center gap-3 rounded px-4 py-2 text-purple-200 transition hover:bg-[#231133]"
+          className="flex items-center gap-3 rounded px-4 py-2 text-purple-700 dark:text-purple-200 transition hover:bg-[#e8e3ff] dark:hover:bg-[#231133]"
         >
           <FaHome />
           {!collapsed && <span>Home</span>}
         </a>
 
         <a href="/start-analyzing">
-          <span className="flex items-center gap-3 rounded px-4 py-2 text-purple-200 transition hover:bg-[#231133]">
+          <span className="flex items-center gap-3 rounded px-4 py-2 text-purple-700 dark:text-purple-200 transition hover:bg-[#e8e3ff] dark:hover:bg-[#231133]">
             <FaSearch />
             {!collapsed && <span>Search Tickers</span>}
           </span>

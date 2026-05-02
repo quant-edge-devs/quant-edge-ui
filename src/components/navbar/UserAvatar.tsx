@@ -37,26 +37,24 @@ const UserAvatar: React.FC<UserAvatarProps> = ({ displayName, email, onSignOut }
         title={displayName || email || 'Account'}
         aria-haspopup="true"
         aria-expanded={open}
-        className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-full border border-white/[0.12] bg-purple-500/15 text-sm font-semibold text-purple-300 transition hover:border-white/[0.22] hover:bg-purple-500/25 focus:outline-none"
+        className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-full border border-black/[0.12] dark:border-white/[0.12] bg-purple-500/15 text-sm font-semibold text-purple-600 dark:text-purple-300 transition hover:border-black/[0.22] dark:hover:border-white/[0.22] hover:bg-purple-500/25 focus:outline-none"
       >
         {initials}
       </button>
 
       {open && (
-        <div className="absolute right-0 z-50 mt-2 w-44 overflow-hidden rounded-xl border border-white/[0.09] bg-[#0d0b1e]/95 shadow-xl shadow-black/40 backdrop-blur-xl">
-          {/* Account info */}
-          <div className="border-b border-white/[0.07] px-4 py-3">
-            <div className="truncate text-xs font-semibold text-white/80">
+        <div className="absolute right-0 z-50 mt-2 w-44 overflow-hidden rounded-xl border border-black/[0.09] dark:border-white/[0.09] bg-white/95 dark:bg-[#0d0b1e]/95 shadow-xl shadow-black/10 dark:shadow-black/40 backdrop-blur-xl">
+          <div className="border-b border-black/[0.07] dark:border-white/[0.07] px-4 py-3">
+            <div className="truncate text-xs font-semibold text-gray-800 dark:text-white/80">
               {displayName || 'Account'}
             </div>
             {email && (
-              <div className="mt-0.5 truncate text-[11px] text-white/35">{email}</div>
+              <div className="mt-0.5 truncate text-[11px] text-gray-400 dark:text-white/35">{email}</div>
             )}
           </div>
-          {/* Actions */}
           <div className="p-1">
             <button
-              className="flex w-full cursor-pointer items-center gap-2 rounded-lg px-3 py-2 text-sm text-white/60 transition hover:bg-white/[0.06] hover:text-white"
+              className="flex w-full cursor-pointer items-center gap-2 rounded-lg px-3 py-2 text-sm text-gray-500 dark:text-white/60 transition hover:bg-black/[0.05] dark:hover:bg-white/[0.06] hover:text-gray-900 dark:hover:text-white"
               onClick={() => { setOpen(false); onSignOut?.(); }}
             >
               <svg width="14" height="14" fill="none" viewBox="0 0 24 24">

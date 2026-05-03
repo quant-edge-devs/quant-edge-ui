@@ -26,12 +26,13 @@ const METRICS = [
   { label: 'Dividend Yield %',       sub: 'Annual dividend as % of price'  },
 ];
 
-const CHART_TYPES = ['Bar Chart', 'Line Chart'] as const;
+const CHART_TYPES = ['Bar Chart', 'Area Chart', 'Line Chart'] as const;
 
 interface CustomChart {
   title: string;
   tickers: string[];
   metric: string;
+  secondaryMetric?: string;
   chartType: string;
   startDate: string;
   endDate: string;
@@ -50,8 +51,9 @@ export default function CustomChartsPage() {
   const [title, setTitle]                       = useState('');
   const [tickerInput, setTickerInput]           = useState('');
   const [tickers, setTickers]                   = useState<string[]>([]);
-  const [selectedMetric, setSelectedMetric]     = useState(METRICS[0].label);
-  const [selectedChartType, setSelectedChartType] = useState<string>(CHART_TYPES[0]);
+  const [selectedMetric, setSelectedMetric]           = useState(METRICS[0].label);
+  const [selectedSecondaryMetric, setSelectedSecondaryMetric] = useState<string>('None');
+  const [selectedChartType, setSelectedChartType]     = useState<string>(CHART_TYPES[0]);
   const [startDate, setStartDate]               = useState('');
   const [endDate, setEndDate]                   = useState('');
   const [customCharts, setCustomCharts]         = useState<CustomChart[]>([]);
@@ -77,6 +79,7 @@ export default function CustomChartsPage() {
           title: data.title || '',
           tickers: t,
           metric: data.metric || '',
+          secondaryMetric: data.secondaryMetric || undefined,
           chartType: data.chartType || '',
           startDate: data.startDate || '',
           endDate: data.endDate || '',
@@ -101,6 +104,7 @@ export default function CustomChartsPage() {
     const chart: CustomChart = {
       title, tickers,
       metric: selectedMetric,
+      ...(selectedSecondaryMetric !== 'None' && { secondaryMetric: selectedSecondaryMetric }),
       chartType: selectedChartType,
       startDate, endDate,
     };
@@ -146,6 +150,7 @@ export default function CustomChartsPage() {
     setTickers(c.tickers || []);
     setTickerInput('');
     setSelectedMetric(c.metric);
+    setSelectedSecondaryMetric(c.secondaryMetric || 'None');
     setSelectedChartType(c.chartType);
     setStartDate(c.startDate);
     setEndDate(c.endDate);
@@ -161,14 +166,17 @@ export default function CustomChartsPage() {
     setStartDate('');
     setEndDate('');
     setSelectedMetric(METRICS[0].label);
+    setSelectedSecondaryMetric('None');
     setSelectedChartType(CHART_TYPES[0]);
   };
 
   const renderChart = (chart: CustomChart, idx: number) => {
-    const { tickers, metric, chartType, startDate, endDate } = chart;
+    const { tickers, metric, secondaryMetric, chartType, startDate, endDate } = chart;
     if (!tickers?.length || !metric || !chartType) return null;
-    const props = { key: `chart-${idx}`, tickers, metric, startDate, endDate, containerWidth: '100%', containerHeight: '100%' };
-    return chartType === 'Line Chart' ? <LineChart {...props} /> : <BarChart {...props} />;
+    const shared = { key: `chart-${idx}`, tickers, metric, secondaryMetric, startDate, endDate, containerWidth: '100%', containerHeight: '100%' };
+    if (chartType === 'Area Chart') return <LineChart {...shared} showArea />;
+    if (chartType === 'Line Chart') return <LineChart {...shared} />;
+    return <BarChart {...shared} />;
   };
 
   const activeChart = customCharts[activeTab];
@@ -267,6 +275,12 @@ export default function CustomChartsPage() {
                 ))}
                 <span className="text-gray-300 dark:text-white/20">·</span>
                 <span>{activeChart.metric}</span>
+                {activeChart.secondaryMetric && (
+                  <>
+                    <span className="text-gray-300 dark:text-white/20">+</span>
+                    <span className="text-purple-500 dark:text-purple-400">{activeChart.secondaryMetric}</span>
+                  </>
+                )}
                 <span className="text-gray-300 dark:text-white/20">·</span>
                 <span>{activeChart.chartType}</span>
                 {activeChart.startDate && (
@@ -383,6 +397,47 @@ export default function CustomChartsPage() {
                 <p className="mt-1.5 text-xs text-gray-400 dark:text-white/30">
                   {METRICS.find((m) => m.label === selectedMetric)?.sub}
                 </p>
+              </div>
+
+              <div>
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="block text-xs font-semibold uppercase tracking-widest text-gray-400 dark:text-white/40">
+                    Comparison Metric <span className="normal-case tracking-normal font-normal text-gray-300 dark:text-white/25">(optional overlay)</span>
+                  </label>
+                  {selectedSecondaryMetric !== 'None' && (
+                    <button
+                      type="button"
+                      onClick={() => setSelectedSecondaryMetric('None')}
+                      className="text-xs text-gray-400 dark:text-white/30 hover:text-red-500 dark:hover:text-red-400 transition"
+                    >
+                      Remove
+                    </button>
+                  )}
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setSelectedSecondaryMetric('None')}
+                    className={`${btnBase} ${selectedSecondaryMetric === 'None' ? btnActive : btnInactive}`}
+                  >
+                    None
+                  </button>
+                  {METRICS.filter((m) => m.label !== selectedMetric).map((m) => (
+                    <button
+                      key={m.label}
+                      type="button"
+                      onClick={() => setSelectedSecondaryMetric(m.label)}
+                      className={`${btnBase} ${selectedSecondaryMetric === m.label ? btnActive : btnInactive}`}
+                    >
+                      {m.label}
+                    </button>
+                  ))}
+                </div>
+                {selectedSecondaryMetric !== 'None' && (
+                  <p className="mt-1.5 text-xs text-gray-400 dark:text-white/30">
+                    Overlaid as a dashed line on a separate right-hand axis
+                  </p>
+                )}
               </div>
 
               <div>

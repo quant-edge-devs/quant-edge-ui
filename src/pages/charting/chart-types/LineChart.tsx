@@ -11,6 +11,7 @@ type LineChartProps = {
   startDate: string;
   endDate: string;
   interval?: string;
+  showArea?: boolean;
   setLoading?: (loading: boolean) => void;
   containerWidth?: string | number;
   containerHeight?: string | number;
@@ -126,6 +127,7 @@ const LineChart = ({
   startDate,
   endDate,
   interval = 'quarter',
+  showArea = false,
   setLoading,
   containerWidth = '100%',
   containerHeight = '100%',
@@ -164,20 +166,14 @@ const LineChart = ({
     if (key === lastParams.current || !tickers.length) return;
     lastParams.current = key;
     setLoading?.(true);
-    Promise.all([
+    Promise.allSettled([
       fetchSeriesData(tickers, metric, startDate, endDate, interval),
       secondaryMetric && secondaryMetric !== 'None'
-        ? fetchSeriesData(
-            tickers,
-            secondaryMetric,
-            startDate,
-            endDate,
-            interval
-          )
+        ? fetchSeriesData(tickers, secondaryMetric, startDate, endDate, interval)
         : Promise.resolve([]),
-    ]).then(([primary, secondary]) => {
-      setPrimaryData(primary);
-      setSecondaryData(secondary);
+    ]).then(([primaryResult, secondaryResult]) => {
+      if (primaryResult.status === 'fulfilled') setPrimaryData(primaryResult.value);
+      if (secondaryResult.status === 'fulfilled') setSecondaryData(secondaryResult.value);
       setLoading?.(false);
     });
   }, [
@@ -431,8 +427,8 @@ const LineChart = ({
       );
       const color = COLORS[i % COLORS.length];
 
-      // Area fill (only first series to keep it readable)
-      if (i === 0) {
+      // Area fill (only first series, only when showArea is true)
+      if (i === 0 && showArea) {
         const areaGen = d3
           .area<DataPoint>()
           .x((d) => x(getDateKey(d.date, interval))!)
@@ -559,7 +555,7 @@ const LineChart = ({
         tooltip
           .style('opacity', '1')
           .html(
-            `<div style="margin-bottom:4px;font-size:11px;color:${isDark ? 'rgba(255,255,255,0.4)' : 'rgba(30,27,75,0.5)'}">${label}</div>${lines.join('<br/>')}`
+            `<div style="margin-bottom:4px;font-size:11px;color:${document.documentElement.classList.contains('dark') ? 'rgba(255,255,255,0.4)' : '#64748b'}">${label}</div>${lines.join('<br/>')}`
           )
           .style(
             'left',
@@ -612,7 +608,7 @@ const LineChart = ({
         .text(label);
       lx += label.length * 7.2 + 36;
     });
-  }, [primaryData, secondaryData, dimensions.width, dimensions.height, isDark]);
+  }, [primaryData, secondaryData, dimensions.width, dimensions.height, isDark, showArea]);
 
   return (
     <div

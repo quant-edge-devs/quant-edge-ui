@@ -14,7 +14,7 @@ const METRICS = [
   { label: 'Net Income',             sub: 'Total company profit'           },
 ];
 
-const CHART_TYPES = ['Bar Chart', 'Line Chart'] as const;
+const CHART_TYPES = ['Bar Chart', 'Area Chart', 'Line Chart'] as const;
 const TIMEFRAMES  = ['1Y', '3Y', '5Y', '10Y'] as const;
 
 const btnBase = 'rounded-lg px-4 py-2 text-sm font-medium transition';
@@ -51,6 +51,7 @@ export const PresetChartsPage = () => {
       setLoading,
       interval: aggregateByYear ? ('annual' as const) : ('quarter' as const),
     };
+    if (selectedChartType === 'Area Chart') return <LineChart {...shared} showArea />;
     if (selectedChartType === 'Line Chart') return <LineChart {...shared} />;
     return <BarChart {...shared} />;
   }, [ticker, selectedMetric, selectedChartType, startDate, endDate, aggregateByYear, tickers]);

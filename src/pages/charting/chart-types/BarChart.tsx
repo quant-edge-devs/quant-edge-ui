@@ -164,20 +164,14 @@ const BarChart = ({
     if (key === lastParams.current || !tickers.length || !metric) return;
     lastParams.current = key;
     setLoading?.(true);
-    Promise.all([
+    Promise.allSettled([
       fetchSeriesData(tickers, metric, startDate, endDate, interval),
       secondaryMetric && secondaryMetric !== 'None'
-        ? fetchSeriesData(
-            tickers,
-            secondaryMetric,
-            startDate,
-            endDate,
-            interval
-          )
+        ? fetchSeriesData(tickers, secondaryMetric, startDate, endDate, interval)
         : Promise.resolve([]),
-    ]).then(([primary, secondary]) => {
-      setPrimaryData(primary);
-      setSecondaryData(secondary);
+    ]).then(([primaryResult, secondaryResult]) => {
+      if (primaryResult.status === 'fulfilled') setPrimaryData(primaryResult.value);
+      if (secondaryResult.status === 'fulfilled') setSecondaryData(secondaryResult.value);
       setLoading?.(false);
     });
   }, [
@@ -455,7 +449,7 @@ const BarChart = ({
             tooltip
               .style('opacity', '1')
               .html(
-                `<div style="margin-bottom:4px;font-size:11px;color:rgba(255,255,255,0.4)">${dateLabel(dateKey, interval)}</div>` +
+                `<div style="margin-bottom:4px;font-size:11px;color:${document.documentElement.classList.contains('dark') ? 'rgba(255,255,255,0.4)' : '#64748b'}">${dateLabel(dateKey, interval)}</div>` +
                   `<span style="color:${color}">${ticker}</span>: ${formatAbbrev(pt.value)}`
               )
               .style(
@@ -502,7 +496,7 @@ const BarChart = ({
               tooltip
                 .style('opacity', '1')
                 .html(
-                  `<div style="margin-bottom:4px;font-size:11px;color:${isDark ? 'rgba(255,255,255,0.4)' : 'rgba(30,27,75,0.5)'}">${dateLabel(dateKey, interval)}</div>` +
+                  `<div style="margin-bottom:4px;font-size:11px;color:${document.documentElement.classList.contains('dark') ? 'rgba(255,255,255,0.4)' : '#64748b'}">${dateLabel(dateKey, interval)}</div>` +
                     `<span style="color:${color}">${ticker} (${secondaryMetric})</span>: ${formatAbbrev(pt.value)}`
                 )
                 .style(

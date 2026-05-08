@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import { ChartingNavbar } from '../../components/navbar/ChartingNavbar';
-
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+import { API_BASE_URL } from '../../config';
 
 interface CompanyInfo {
   price: string;

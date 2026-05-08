@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router';
-import { Login } from '../pages/log-in/index';
+import { Login } from '../pages/log-in/LoginPage';
 import * as AuthContextModule from '../contexts/AuthContext';
 import * as ThemeContextModule from '../contexts/ThemeContext';
 

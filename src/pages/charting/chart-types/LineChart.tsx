@@ -1,8 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useTheme } from '../../../contexts/ThemeContext';
 import * as d3 from 'd3';
-
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+import { API_BASE_URL } from '../../../config';
 
 type LineChartProps = {
   tickers: string[];
@@ -62,6 +61,14 @@ function formatAbbrev(v: d3.NumberValue) {
   return n.toFixed(2);
 }
 
+const RATIOS_FIELD: Record<string, string> = {
+  'EV / EBITDA': 'evToEbitda',
+  'Price to Book': 'pbRatio',
+  'Debt to Equity': 'debtToEquity',
+  'Return on Equity': 'roe',
+  'Return on Assets': 'roa',
+};
+
 async function fetchSeriesData(
   tickers: string[],
   metricName: string,
@@ -69,10 +76,12 @@ async function fetchSeriesData(
   endDate: string,
   interval: string
 ): Promise<Series[]> {
+  const ratiosField = RATIOS_FIELD[metricName];
   return Promise.all(
     tickers.map(async (ticker) => {
-      const endpoint =
-        metricName === 'Market Cap'
+      const endpoint = ratiosField
+        ? `${API_BASE_URL}/stocks/${ticker}/${startDate}/${endDate}/${interval}/ratios`
+        : metricName === 'Market Cap'
           ? `${API_BASE_URL}/stocks/${ticker}/${startDate}/${endDate}/marketCapHistory`
           : `${API_BASE_URL}/stocks/${ticker}/${startDate}/${endDate}/${interval}/${
               metricName === 'Price To Earnings Ratio'
@@ -91,7 +100,9 @@ async function fetchSeriesData(
             }`;
       const raw = await (await fetch(endpoint)).json();
       let points: DataPoint[] = [];
-      if (metricName === 'Revenues' && raw?.monthlyRevenuePoints) {
+      if (ratiosField && Array.isArray(raw)) {
+        points = raw.map((d: any) => ({ date: d.date, value: d[ratiosField] }));
+      } else if (metricName === 'Revenues' && raw?.monthlyRevenuePoints) {
         points = raw.monthlyRevenuePoints.map((d: any) => ({
           date: d.date,
           value: d.revenueActual,

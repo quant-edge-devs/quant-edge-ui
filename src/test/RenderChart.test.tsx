@@ -11,6 +11,12 @@ vi.mock('../pages/charting/chart-types/BarChart', () => ({
   default: (props: any) => <div data-testid="bar-chart" data-metric={props.metric} />,
 }));
 
+vi.mock('../pages/charting/chart-types/BubbleChart', () => ({
+  default: (props: any) => (
+    <div data-testid="bubble-chart" data-xmetric={props.xMetric} data-ymetric={props.yMetric} />
+  ),
+}));
+
 const baseProps = {
   tickers: ['AAPL'],
   metric: 'Revenues',
@@ -54,5 +60,32 @@ describe('Chart (RenderChart)', () => {
   it('renders bar chart when secondaryMetric is provided', () => {
     render(<Chart {...baseProps} chartType="Bar Chart" secondaryMetric="Net Income" />);
     expect(screen.getByTestId('bar-chart')).toBeInTheDocument();
+  });
+
+  it('renders a BubbleChart for "Bubble Chart" chartType', () => {
+    render(
+      <Chart
+        {...baseProps}
+        chartType="Bubble Chart"
+        secondaryMetric="Net Income"
+        tickers={['AAPL', 'MSFT']}
+      />
+    );
+    expect(screen.getByTestId('bubble-chart')).toBeInTheDocument();
+  });
+
+  it('passes xMetric and yMetric through to BubbleChart', () => {
+    render(
+      <Chart
+        {...baseProps}
+        chartType="Bubble Chart"
+        metric="Revenues"
+        secondaryMetric="Net Income"
+        tickers={['AAPL', 'MSFT']}
+      />
+    );
+    const el = screen.getByTestId('bubble-chart');
+    expect(el.getAttribute('data-xmetric')).toBe('Revenues');
+    expect(el.getAttribute('data-ymetric')).toBe('Net Income');
   });
 });

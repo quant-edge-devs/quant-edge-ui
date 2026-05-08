@@ -6,7 +6,7 @@ import { Logo } from '../Logo';
 import { FaSun, FaMoon } from 'react-icons/fa';
 
 interface ChartingNavbarProps {
-  activeMode?: 'preset' | 'custom';
+  activeMode?: 'preset' | 'custom' | 'insider' | 'correlation';
 }
 
 export const ChartingNavbar = ({ activeMode }: ChartingNavbarProps) => {
@@ -41,6 +41,26 @@ export const ChartingNavbar = ({ activeMode }: ChartingNavbarProps) => {
               }`}
             >
               Custom
+            </Link>
+            <Link
+              to="/charting/insider"
+              className={`rounded-lg px-5 py-1.5 text-sm font-semibold transition ${
+                activeMode === 'insider'
+                  ? 'bg-purple-600 text-white shadow'
+                  : 'text-gray-500 dark:text-white/50 hover:text-gray-900 dark:hover:text-white'
+              }`}
+            >
+              Insider
+            </Link>
+            <Link
+              to="/charting/correlation"
+              className={`rounded-lg px-5 py-1.5 text-sm font-semibold transition ${
+                activeMode === 'correlation'
+                  ? 'bg-purple-600 text-white shadow'
+                  : 'text-gray-500 dark:text-white/50 hover:text-gray-900 dark:hover:text-white'
+              }`}
+            >
+              Correlation
             </Link>
           </div>
         )}

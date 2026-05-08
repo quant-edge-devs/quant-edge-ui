@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { MemoryRouter, Routes, Route } from 'react-router';
-import { RequireAuth } from '../components/require-auth.tsx/index';
+import { RequireAuth } from '../components/require-auth/RequireAuth';
 import * as AuthContextModule from '../contexts/AuthContext';
 
 function setup(currentUser: object | null) {

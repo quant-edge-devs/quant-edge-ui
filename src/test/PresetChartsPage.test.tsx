@@ -15,6 +15,12 @@ vi.mock('../pages/charting/chart-types/BarChart', () => ({
   default: ({ metric }: any) => <div data-testid="bar-chart">{metric}</div>,
 }));
 
+vi.mock('../pages/charting/chart-types/BubbleChart', () => ({
+  default: ({ xMetric, yMetric }: any) => (
+    <div data-testid="bubble-chart">{xMetric}|{yMetric}</div>
+  ),
+}));
+
 function setup() {
   vi.spyOn(AuthContextModule, 'useAuth').mockReturnValue({
     currentUser: { displayName: 'Test User', email: 'test@test.com' } as any,
@@ -77,6 +83,7 @@ describe('PresetChartsPage — initial render', () => {
     expect(screen.getByRole('button', { name: 'Bar Chart' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Area Chart' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Line Chart' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Bubble Chart' })).toBeInTheDocument();
   });
 
   it('renders all timeframe buttons', () => {
@@ -179,6 +186,41 @@ describe('PresetChartsPage — chart type switching', () => {
     await searchAndSwitchTo('Area Chart');
     await waitFor(() => {
       expect(screen.getByTestId('line-chart')).toBeInTheDocument();
+    });
+  });
+});
+
+describe('PresetChartsPage — bubble chart mode', () => {
+  it('shows multi-ticker input when Bubble Chart is selected', async () => {
+    renderPage();
+    await userEvent.click(screen.getByRole('button', { name: 'Bubble Chart' }));
+    expect(
+      screen.getByPlaceholderText('Add ticker (e.g. AAPL) and press Enter')
+    ).toBeInTheDocument();
+  });
+
+  it('shows Y Axis Metric selector when Bubble Chart is selected', async () => {
+    renderPage();
+    await userEvent.click(screen.getByRole('button', { name: 'Bubble Chart' }));
+    expect(screen.getByText('Y Axis Metric')).toBeInTheDocument();
+  });
+
+  it('shows "Add tickers to get started" empty state in bubble mode', async () => {
+    renderPage();
+    await userEvent.click(screen.getByRole('button', { name: 'Bubble Chart' }));
+    expect(screen.getByText('Add tickers to get started')).toBeInTheDocument();
+  });
+
+  it('renders BubbleChart after adding tickers in bubble mode', async () => {
+    renderPage();
+    await userEvent.click(screen.getByRole('button', { name: 'Bubble Chart' }));
+    const input = screen.getByPlaceholderText('Add ticker (e.g. AAPL) and press Enter');
+    await userEvent.type(input, 'AAPL');
+    await userEvent.click(screen.getByRole('button', { name: 'Add' }));
+    await userEvent.type(input, 'MSFT');
+    await userEvent.click(screen.getByRole('button', { name: 'Add' }));
+    await waitFor(() => {
+      expect(screen.getByTestId('bubble-chart')).toBeInTheDocument();
     });
   });
 });

@@ -27,7 +27,7 @@ export default function SelectDashboardTypePage() {
           </p>
         </div>
 
-        <div className="animate-fade-up-delay grid w-full max-w-2xl gap-5 md:grid-cols-2">
+        <div className="animate-fade-up-delay grid w-full max-w-4xl gap-5 md:grid-cols-3">
           <button
             onClick={() => navigate('/charting/preset')}
             className="group flex flex-col rounded-2xl border border-black/[0.07] dark:border-white/[0.07] bg-black/[0.04] dark:bg-white/[0.03] p-8 text-left backdrop-blur-sm transition-all duration-300 hover:border-purple-500/30 hover:bg-black/[0.06] dark:hover:bg-white/[0.06] hover:shadow-2xl hover:shadow-purple-950/20 dark:hover:shadow-purple-950/30"
@@ -43,6 +43,32 @@ export default function SelectDashboardTypePage() {
             </p>
             <div className="mt-6 flex items-center gap-1.5 text-sm font-semibold text-purple-500 dark:text-purple-400 transition group-hover:gap-2">
               Explore presets <span>→</span>
+            </div>
+          </button>
+
+          <button
+            onClick={() => navigate('/charting/correlation')}
+            className="group flex flex-col rounded-2xl border border-black/[0.07] dark:border-white/[0.07] bg-black/[0.04] dark:bg-white/[0.03] p-8 text-left backdrop-blur-sm transition-all duration-300 hover:border-purple-500/30 hover:bg-black/[0.06] dark:hover:bg-white/[0.06] hover:shadow-2xl hover:shadow-purple-950/20 dark:hover:shadow-purple-950/30"
+          >
+            <div className="mb-5 flex h-12 w-12 items-center justify-center rounded-xl bg-purple-500/10 ring-1 ring-purple-500/20 transition group-hover:bg-purple-500/20">
+              <svg width="22" height="22" fill="none" viewBox="0 0 24 24">
+                <rect x="3"  y="3"  width="4" height="4" rx="1" fill="#A855F7" fillOpacity="0.9" />
+                <rect x="10" y="3"  width="4" height="4" rx="1" fill="#A855F7" fillOpacity="0.45" />
+                <rect x="17" y="3"  width="4" height="4" rx="1" fill="#ef4444" fillOpacity="0.45" />
+                <rect x="3"  y="10" width="4" height="4" rx="1" fill="#A855F7" fillOpacity="0.45" />
+                <rect x="10" y="10" width="4" height="4" rx="1" fill="#A855F7" fillOpacity="0.9" />
+                <rect x="17" y="10" width="4" height="4" rx="1" fill="#ef4444" fillOpacity="0.25" />
+                <rect x="3"  y="17" width="4" height="4" rx="1" fill="#ef4444" fillOpacity="0.45" />
+                <rect x="10" y="17" width="4" height="4" rx="1" fill="#ef4444" fillOpacity="0.25" />
+                <rect x="17" y="17" width="4" height="4" rx="1" fill="#A855F7" fillOpacity="0.9" />
+              </svg>
+            </div>
+            <div className="mb-2 text-xl font-bold">Correlation</div>
+            <p className="text-sm leading-relaxed text-gray-500 dark:text-white/50">
+              Visualize how stocks move together. Compare a basket of tickers and see which are correlated, inversely correlated, or independent.
+            </p>
+            <div className="mt-6 flex items-center gap-1.5 text-sm font-semibold text-purple-500 dark:text-purple-400 transition group-hover:gap-2">
+              Explore correlations <span>→</span>
             </div>
           </button>
 

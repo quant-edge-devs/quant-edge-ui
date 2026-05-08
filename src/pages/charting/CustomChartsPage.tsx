@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { FaPlus, FaTimes, FaTrash, FaEdit } from 'react-icons/fa';
 import LineChart from './chart-types/LineChart';
 import BarChart from './chart-types/BarChart';
+import BubbleChart from './chart-types/BubbleChart';
 import { useAuth } from '../../contexts/AuthContext';
 import {
   collection,
@@ -23,16 +24,22 @@ const METRICS = [
   { label: 'Revenues',               sub: 'Total company revenue'          },
   { label: 'Net Income',             sub: 'Total company profit'           },
   { label: 'Market Cap',             sub: 'Total company valuation'        },
-  { label: 'Dividend Yield %',       sub: 'Annual dividend as % of price'  },
+  { label: 'Dividend Yield (%)',      sub: 'Annual dividend as % of price'  },
+  { label: 'EV / EBITDA',            sub: 'Enterprise value vs. operating earnings' },
+  { label: 'Price to Book',          sub: 'Market price vs. book value'    },
+  { label: 'Debt to Equity',         sub: 'Financial leverage ratio'       },
+  { label: 'Return on Equity',       sub: 'Net income vs. shareholder equity' },
+  { label: 'Return on Assets',       sub: 'Net income vs. total assets'    },
 ];
 
-const CHART_TYPES = ['Bar Chart', 'Area Chart', 'Line Chart'] as const;
+const CHART_TYPES = ['Bar Chart', 'Area Chart', 'Line Chart', 'Bubble Chart'] as const;
 
 interface CustomChart {
   title: string;
   tickers: string[];
   metric: string;
   secondaryMetric?: string;
+  sizeMetric?: string;
   chartType: string;
   startDate: string;
   endDate: string;
@@ -53,6 +60,7 @@ export default function CustomChartsPage() {
   const [tickers, setTickers]                   = useState<string[]>([]);
   const [selectedMetric, setSelectedMetric]           = useState(METRICS[0].label);
   const [selectedSecondaryMetric, setSelectedSecondaryMetric] = useState<string>('None');
+  const [selectedSizeMetric, setSelectedSizeMetric]   = useState<string>('None');
   const [selectedChartType, setSelectedChartType]     = useState<string>(CHART_TYPES[0]);
   const [startDate, setStartDate]               = useState('');
   const [endDate, setEndDate]                   = useState('');
@@ -80,6 +88,7 @@ export default function CustomChartsPage() {
           tickers: t,
           metric: data.metric || '',
           secondaryMetric: data.secondaryMetric || undefined,
+          sizeMetric: data.sizeMetric || undefined,
           chartType: data.chartType || '',
           startDate: data.startDate || '',
           endDate: data.endDate || '',
@@ -100,11 +109,14 @@ export default function CustomChartsPage() {
   const handleRemoveTicker = (t: string) =>
     setTickers((prev) => prev.filter((tk) => tk !== t));
 
+  const isBubble = selectedChartType === 'Bubble Chart';
+
   const handleAddOrUpdateChart = async () => {
     const chart: CustomChart = {
       title, tickers,
       metric: selectedMetric,
       ...(selectedSecondaryMetric !== 'None' && { secondaryMetric: selectedSecondaryMetric }),
+      ...(isBubble && selectedSizeMetric !== 'None' && { sizeMetric: selectedSizeMetric }),
       chartType: selectedChartType,
       startDate, endDate,
     };
@@ -151,6 +163,7 @@ export default function CustomChartsPage() {
     setTickerInput('');
     setSelectedMetric(c.metric);
     setSelectedSecondaryMetric(c.secondaryMetric || 'None');
+    setSelectedSizeMetric(c.sizeMetric || 'None');
     setSelectedChartType(c.chartType);
     setStartDate(c.startDate);
     setEndDate(c.endDate);
@@ -167,12 +180,29 @@ export default function CustomChartsPage() {
     setEndDate('');
     setSelectedMetric(METRICS[0].label);
     setSelectedSecondaryMetric('None');
+    setSelectedSizeMetric('None');
     setSelectedChartType(CHART_TYPES[0]);
   };
 
   const renderChart = (chart: CustomChart, idx: number) => {
-    const { tickers, metric, secondaryMetric, chartType, startDate, endDate } = chart;
+    const { tickers, metric, secondaryMetric, sizeMetric, chartType, startDate, endDate } = chart;
     if (!tickers?.length || !metric || !chartType) return null;
+    if (chartType === 'Bubble Chart') {
+      if (!secondaryMetric) return null;
+      return (
+        <BubbleChart
+          key={`chart-${idx}`}
+          tickers={tickers}
+          xMetric={metric}
+          yMetric={secondaryMetric}
+          sizeMetric={sizeMetric}
+          startDate={startDate}
+          endDate={endDate}
+          containerWidth="100%"
+          containerHeight="100%"
+        />
+      );
+    }
     const shared = { key: `chart-${idx}`, tickers, metric, secondaryMetric, startDate, endDate, containerWidth: '100%', containerHeight: '100%' };
     if (chartType === 'Area Chart') return <LineChart {...shared} showArea />;
     if (chartType === 'Line Chart') return <LineChart {...shared} />;
@@ -281,6 +311,12 @@ export default function CustomChartsPage() {
                     <span className="text-purple-500 dark:text-purple-400">{activeChart.secondaryMetric}</span>
                   </>
                 )}
+                {activeChart.sizeMetric && (
+                  <>
+                    <span className="text-gray-300 dark:text-white/20">·</span>
+                    <span className="text-purple-500 dark:text-purple-400">size: {activeChart.sizeMetric}</span>
+                  </>
+                )}
                 <span className="text-gray-300 dark:text-white/20">·</span>
                 <span>{activeChart.chartType}</span>
                 {activeChart.startDate && (
@@ -380,7 +416,7 @@ export default function CustomChartsPage() {
 
               <div>
                 <label className="mb-1.5 block text-xs font-semibold uppercase tracking-widest text-gray-400 dark:text-white/40">
-                  Metric
+                  {isBubble ? 'X Axis Metric' : 'Metric'}
                 </label>
                 <div className="flex flex-wrap gap-2">
                   {METRICS.map((m) => (
@@ -402,9 +438,11 @@ export default function CustomChartsPage() {
               <div>
                 <div className="flex items-center justify-between mb-1.5">
                   <label className="block text-xs font-semibold uppercase tracking-widest text-gray-400 dark:text-white/40">
-                    Comparison Metric <span className="normal-case tracking-normal font-normal text-gray-300 dark:text-white/25">(optional overlay)</span>
+                    {isBubble
+                      ? 'Y Axis Metric'
+                      : <><span>Comparison Metric</span> <span className="normal-case tracking-normal font-normal text-gray-300 dark:text-white/25">(optional overlay)</span></>}
                   </label>
-                  {selectedSecondaryMetric !== 'None' && (
+                  {!isBubble && selectedSecondaryMetric !== 'None' && (
                     <button
                       type="button"
                       onClick={() => setSelectedSecondaryMetric('None')}
@@ -415,13 +453,15 @@ export default function CustomChartsPage() {
                   )}
                 </div>
                 <div className="flex flex-wrap gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setSelectedSecondaryMetric('None')}
-                    className={`${btnBase} ${selectedSecondaryMetric === 'None' ? btnActive : btnInactive}`}
-                  >
-                    None
-                  </button>
+                  {!isBubble && (
+                    <button
+                      type="button"
+                      onClick={() => setSelectedSecondaryMetric('None')}
+                      className={`${btnBase} ${selectedSecondaryMetric === 'None' ? btnActive : btnInactive}`}
+                    >
+                      None
+                    </button>
+                  )}
                   {METRICS.filter((m) => m.label !== selectedMetric).map((m) => (
                     <button
                       key={m.label}
@@ -433,12 +473,57 @@ export default function CustomChartsPage() {
                     </button>
                   ))}
                 </div>
-                {selectedSecondaryMetric !== 'None' && (
+                {!isBubble && selectedSecondaryMetric !== 'None' && (
                   <p className="mt-1.5 text-xs text-gray-400 dark:text-white/30">
                     Overlaid as a dashed line on a separate right-hand axis
                   </p>
                 )}
               </div>
+
+              {isBubble && (
+                <div>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <label className="block text-xs font-semibold uppercase tracking-widest text-gray-400 dark:text-white/40">
+                      Bubble Size <span className="normal-case tracking-normal font-normal text-gray-300 dark:text-white/25">(optional)</span>
+                    </label>
+                    {selectedSizeMetric !== 'None' && (
+                      <button
+                        type="button"
+                        onClick={() => setSelectedSizeMetric('None')}
+                        className="text-xs text-gray-400 dark:text-white/30 hover:text-red-500 dark:hover:text-red-400 transition"
+                      >
+                        Remove
+                      </button>
+                    )}
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setSelectedSizeMetric('None')}
+                      className={`${btnBase} ${selectedSizeMetric === 'None' ? btnActive : btnInactive}`}
+                    >
+                      None
+                    </button>
+                    {METRICS.filter(
+                      (m) => m.label !== selectedMetric && m.label !== selectedSecondaryMetric
+                    ).map((m) => (
+                      <button
+                        key={m.label}
+                        type="button"
+                        onClick={() => setSelectedSizeMetric(m.label)}
+                        className={`${btnBase} ${selectedSizeMetric === m.label ? btnActive : btnInactive}`}
+                      >
+                        {m.label}
+                      </button>
+                    ))}
+                  </div>
+                  {selectedSizeMetric !== 'None' && (
+                    <p className="mt-1.5 text-xs text-gray-400 dark:text-white/30">
+                      Bubble area scales with this metric's most recent value
+                    </p>
+                  )}
+                </div>
+              )}
 
               <div>
                 <label className="mb-1.5 block text-xs font-semibold uppercase tracking-widest text-gray-400 dark:text-white/40">
@@ -494,7 +579,7 @@ export default function CustomChartsPage() {
                 <button
                   type="button"
                   onClick={handleAddOrUpdateChart}
-                  disabled={!title && tickers.length === 0}
+                  disabled={(!title && tickers.length === 0) || (isBubble && selectedSecondaryMetric === 'None')}
                   className="rounded-xl bg-purple-600 px-6 py-2.5 text-sm font-semibold text-white shadow shadow-purple-900/40 transition hover:bg-purple-500 disabled:cursor-not-allowed disabled:opacity-40"
                 >
                   {editIdx !== null ? 'Save Changes' : 'Create Chart'}

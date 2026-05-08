@@ -1,10 +1,12 @@
 import BarChart from './chart-types/BarChart';
 import LineChart from './chart-types/LineChart';
+import BubbleChart from './chart-types/BubbleChart';
 
 type ChartProps = {
   tickers: string[];
   metric: string;
   secondaryMetric?: string;
+  sizeMetric?: string;
   startDate: string;
   endDate: string;
   chartType: string;
@@ -43,6 +45,20 @@ const Chart = ({ chartType, ...props }: ChartProps) => {
           />
         </div>
       );
+    case 'Area Chart':
+      return (
+        <div style={chartContainerStyle} className="h-full w-full">
+          <LineChart
+            {...props}
+            showArea
+            containerWidth="100%"
+            containerHeight="100%"
+            {...(props.secondaryMetric
+              ? { secondaryMetric: props.secondaryMetric }
+              : {})}
+          />
+        </div>
+      );
     case 'Line Chart':
       return (
         <div style={chartContainerStyle} className="h-full w-full">
@@ -53,6 +69,21 @@ const Chart = ({ chartType, ...props }: ChartProps) => {
             {...(props.secondaryMetric
               ? { secondaryMetric: props.secondaryMetric }
               : {})}
+          />
+        </div>
+      );
+    case 'Bubble Chart':
+      return (
+        <div style={chartContainerStyle} className="h-full w-full">
+          <BubbleChart
+            tickers={props.tickers}
+            xMetric={props.metric}
+            yMetric={props.secondaryMetric ?? ''}
+            sizeMetric={props.sizeMetric}
+            startDate={props.startDate}
+            endDate={props.endDate}
+            containerWidth="100%"
+            containerHeight="100%"
           />
         </div>
       );

@@ -1,18 +1,18 @@
 import { Navigate, type RouteObject } from 'react-router';
-import { Landing } from './pages/landing';
-import { MainLayout } from './layouts';
-import { ContactUs } from './pages/contact-us';
-import { Login } from './pages/log-in';
-import { SignUp } from './pages/sign-up';
-import { Recover } from './pages/recover';
-import { Pricing } from './pages/pricing';
-import { Tutorial } from './pages/tutorial';
-import { StartAnalyzing } from './pages/start-analyzing';
-import { Auth } from './pages/auth';
+import { Landing } from './pages/landing/LandingPage';
+import { MainLayout } from './layouts/MainLayout';
+import { ContactUs } from './pages/contact-us/ContactUsPage';
+import { Login } from './pages/log-in/LoginPage';
+import { SignUp } from './pages/sign-up/SignUpPage';
+import { Recover } from './pages/recover/RecoverPage';
+import { Pricing } from './pages/pricing/PricingPage';
+import { Tutorial } from './pages/tutorial/TutorialPage';
+import { StartAnalyzing } from './pages/start-analyzing/StartAnalyzingPage';
+import { Auth } from './pages/auth/AuthPage';
 import { PresetChartsPage } from './pages/charting/PresetChartsPage';
 import SelectDashboardTypePage from './pages/charting/welcome-modal/SelectDashboardTypePage';
 import CustomChartsPage from './pages/charting/CustomChartsPage';
-import TickerInfoPage from './pages/ticker-info';
+import TickerInfoPage from './pages/ticker-info/TickerInfoPage';
 
 export const routes: RouteObject[] = [
   {
